@@ -17,4 +17,4 @@ RUN npm i
 EXPOSE 3000
 
 # Usar variáveis de ambiente para determinar o script a ser executado, permitindo especificar o caminho completo
-CMD ["sh", "-c", "npx nodemon -L --exec 'ts-node --project tsconfig.json --files ${ENTRY_SCRIPT}'"]
+CMD ["sh", "-c", "npx nodemon -L --exec 'ts-node --project tsconfig.json --files' ${ENTRY_SCRIPT}"]
