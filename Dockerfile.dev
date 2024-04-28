@@ -1,0 +1,20 @@
+# Usar uma imagem base do Node.js
+FROM node:20.12.2-alpine
+
+# Definir o diretório de trabalho no container
+WORKDIR /app
+
+# Copiar os arquivos de definição de dependências
+COPY package*.json ./
+
+# Copiar todos os outros arquivos necessários para o diretório de trabalho
+COPY . .
+
+# Instalar todas as dependências
+RUN npm i
+
+# Expor a porta que o aplicativo usa
+EXPOSE 3000
+
+# Usar variáveis de ambiente para determinar o script a ser executado, permitindo especificar o caminho completo
+CMD ["sh", "-c", "npx nodemon -L --exec 'ts-node --project tsconfig.json --files ${ENTRY_SCRIPT}'"]

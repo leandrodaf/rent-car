@@ -1,0 +1,6 @@
+{
+    "watch": ["src"],
+    "ext": "ts",
+    "ignore": ["src/**/*.spec.ts", "src/**/*.test.ts"],
+    "exec": "ts-node -r tsconfig-paths/register --project tsconfig.json src/cmd/projecto-etc/index.ts"
+}
