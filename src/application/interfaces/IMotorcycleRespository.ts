@@ -8,4 +8,9 @@ export interface IMotorcycleRespository {
         filters: Partial<IMotorcycle> | null,
         paginate?: PaginateQueryType
     ): Promise<IMotorcycleModel[]>
+
+    update(
+        search: Partial<IMotorcycle>,
+        data: Partial<IMotorcycle>
+    ): Promise<IMotorcycleModel | null>
 }

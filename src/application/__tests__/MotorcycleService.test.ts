@@ -2,10 +2,13 @@ import { MotorcycleService } from '../MotorcycleService'
 import { IMotorcycleRespository } from '../interfaces/IMotorcycleRespository'
 import { IMotorcycle, IMotorcycleModel } from '../../domain/Motorcycle'
 import { FilterQuery } from '../../infrastructure/api/requesters/queries/PaginateQuery'
+import { CustomError } from '../../utils/handdlers/CustomError'
+import { StatusCodes } from 'http-status-codes'
 
 const motorcycleRespository: IMotorcycleRespository = {
     create: jest.fn(),
     filter: jest.fn(),
+    update: jest.fn(),
 }
 
 describe('MotorcycleService', () => {
@@ -103,6 +106,56 @@ describe('MotorcycleService', () => {
             )
 
             expect(result).toEqual(mockResponse)
+        })
+    })
+
+    describe('updateBy', () => {
+        let service: MotorcycleService
+
+        const testMotorcycle: IMotorcycle = {
+            plate: 'example-plate',
+            year: 2024,
+            modelName: 'foo',
+        }
+
+        const updatedMotorcycle: IMotorcycleModel = {
+            ...testMotorcycle,
+            _id: '1',
+        } as IMotorcycleModel
+
+        beforeEach(() => {
+            jest.clearAllMocks()
+            service = new MotorcycleService(motorcycleRespository)
+        })
+
+        it('should update the motorcycle and return the updated model when motorcycle is found', async () => {
+            const searchCriteria = { plate: 'example-plate' }
+            const newData = { year: 2025 }
+
+            motorcycleRespository.update = jest
+                .fn()
+                .mockResolvedValue(updatedMotorcycle)
+
+            const result = await service.updateBy(searchCriteria, newData)
+
+            expect(motorcycleRespository.update).toHaveBeenCalledWith(
+                searchCriteria,
+                newData
+            )
+            expect(result).toEqual(updatedMotorcycle)
+        })
+
+        it('should throw a CustomError with status 404 when no motorcycle is found', async () => {
+            const searchCriteria = { plate: 'non-existent-plate' }
+            const newData = { year: 2025 }
+
+            motorcycleRespository.update = jest.fn().mockResolvedValue(null)
+
+            await expect(
+                service.updateBy(searchCriteria, newData)
+            ).rejects.toThrow(
+                new CustomError('Motorcycle not found', StatusCodes.NOT_FOUND)
+            )
         })
     })
 })

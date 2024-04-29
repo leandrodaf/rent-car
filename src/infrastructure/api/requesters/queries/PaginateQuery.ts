@@ -24,3 +24,12 @@ export async function getQueries<T>(
 
     return { paginate: pagination, filters }
 }
+
+export async function getParams<T>(
+    data: Request,
+    dataSchema: z.ZodType<T>
+): Promise<T> {
+    const filters = await dataSchema.parseAsync(data.params)
+
+    return filters
+}

@@ -7,6 +7,13 @@ import {
 import { buildPaginate } from './Paginate'
 
 export class MotorcycleRespository implements IMotorcycleRespository {
+    update(
+        search: Partial<IMotorcycle>,
+        data: Partial<IMotorcycle>
+    ): Promise<IMotorcycleModel | null> {
+        return Motorcycle.findOneAndUpdate(search, data)
+    }
+
     create(data: IMotorcycle): Promise<IMotorcycleModel> {
         return Motorcycle.create(data)
     }

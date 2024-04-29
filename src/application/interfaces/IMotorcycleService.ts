@@ -7,4 +7,9 @@ export interface IMotorcycleService {
     paginate(
         search: FilterQuery<Partial<IMotorcycle>>
     ): Promise<IMotorcycleModel[]>
+
+    updateBy(
+        search: Partial<IMotorcycle>,
+        data: Partial<IMotorcycle>
+    ): Promise<IMotorcycleModel>
 }

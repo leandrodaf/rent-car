@@ -14,6 +14,7 @@ describe('MotorcycleController', () => {
         mockMotorcycleService = {
             create: jest.fn(),
             paginate: jest.fn(),
+            updateBy: jest.fn(),
         }
 
         motorcycleData = {
@@ -117,6 +118,45 @@ describe('MotorcycleController', () => {
             })
 
             await controller.paginate(req, res, next)
+
+            expect(next).toHaveBeenCalledWith(expect.any(ZodError))
+        })
+    })
+
+    describe('updatePlate', () => {
+        it('should successfully update the motorcycle plate and return status 200', async () => {
+            const { req, res, next } = createMockReqRes({
+                body: {
+                    plate: 'XYZ1A21',
+                },
+                params: {
+                    plate: 'XYZ1A22',
+                },
+                auth: {
+                    userType: UserType.ADMIN,
+                },
+            })
+
+            mockMotorcycleService.updateBy.mockResolvedValue({} as any)
+
+            await controller.updatePlate(req, res, next)
+
+            expect(mockMotorcycleService.updateBy).toHaveBeenCalledWith(
+                { plate: 'XYZ1A22' },
+                { plate: 'XYZ1A21' }
+            )
+            expect(res.status).toHaveBeenCalledWith(200)
+            expect(res.send).toHaveBeenCalled()
+        })
+
+        it('should handle errors if update operation fails', async () => {
+            const { req, res, next } = createMockReqRes({
+                auth: {
+                    userType: UserType.ADMIN,
+                },
+            })
+
+            await controller.updatePlate(req, res, next)
 
             expect(next).toHaveBeenCalledWith(expect.any(ZodError))
         })

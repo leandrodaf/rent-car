@@ -59,4 +59,24 @@ describe('MotorcycleRepository', () => {
             expect(exec).toHaveBeenCalled()
         })
     })
+
+    describe('update', () => {
+        it('Must update using mongoose apis with update', async () => {
+            const exec = jest.fn().mockResolvedValue([])
+
+            Motorcycle.findOneAndUpdate = jest
+                .fn()
+                .mockImplementation(() => ({ exec }))
+
+            const search = { plate: 'foo-id' }
+            const data: Partial<IMotorcycle> = { plate: 'foo bar' }
+
+            await motorcycleRepository.update(search, data)
+
+            expect(Motorcycle.findOneAndUpdate).toHaveBeenCalledWith(
+                search,
+                data
+            )
+        })
+    })
 })

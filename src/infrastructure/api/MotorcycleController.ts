@@ -8,8 +8,12 @@ import {
     CreateMotorcycleRequestType,
 } from './requesters/CreateMotorcycleRequest'
 import { IMotorcycleService } from '../../application/interfaces/IMotorcycleService'
-import { getQueries } from './requesters/queries/PaginateQuery'
+import { getParams, getQueries } from './requesters/queries/PaginateQuery'
 import { MotorcycleQuery } from './requesters/queries/MotorcycleQuery'
+import {
+    UpdateMotorcycleRequest,
+    UpdateMotorcycleRequestType,
+} from './requesters/UpdateMotorcycleRequest'
 
 export class MotorcycleController {
     constructor(private readonly motorcycleService: IMotorcycleService) {}
@@ -36,5 +40,18 @@ export class MotorcycleController {
             data: result.map((item) => new MotorcycleResource(item)),
             paginate: query.paginate,
         })
+    }
+
+    @Authorize([UserType.ADMIN])
+    @ErrorHandler()
+    async updatePlate(req: Request, response: Response, next: NextFunction) {
+        const result: UpdateMotorcycleRequestType =
+            await UpdateMotorcycleRequest.parseAsync(req.body)
+
+        const { plate } = await getParams(req, UpdateMotorcycleRequest)
+
+        await this.motorcycleService.updateBy({ plate }, result)
+
+        response.status(200).send()
     }
 }
