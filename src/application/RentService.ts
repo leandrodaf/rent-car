@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes'
 import { DriverLicenseType, IDelivererModel } from '../domain/Deliverer'
-import { IRentModel, RentStatus } from '../domain/Rent'
+import { IRent, IRentModel, RentStatus } from '../domain/Rent'
 import { CustomError } from '../utils/handdlers/CustomError'
 import { IDelivererService } from './interfaces/IDelivererService'
 import { IRentService } from './interfaces/IRentService'
@@ -8,6 +8,7 @@ import { DateTime } from 'luxon'
 import config from '../config'
 import { IRentPlanRepository } from './interfaces/IRentPlanRepository'
 import { IRentRepository } from './interfaces/IRentRepository'
+import { FilterQuery } from '../infrastructure/api/requesters/queries/PaginateQuery'
 
 export class RentService implements IRentService {
     constructor(
@@ -15,6 +16,14 @@ export class RentService implements IRentService {
         private readonly delivererService: IDelivererService,
         private readonly rentPlanRepository: IRentPlanRepository
     ) {}
+
+    async paginate(search: FilterQuery<Partial<IRent>>): Promise<IRentModel[]> {
+        const { filters, paginate } = search
+
+        const rents = await this.rentRepository.filter(filters, paginate)
+
+        return rents.length ? rents : []
+    }
 
     private async checkDelivererAuthorization(
         delivererId: string

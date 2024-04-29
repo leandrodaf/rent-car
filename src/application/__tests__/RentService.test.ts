@@ -3,10 +3,11 @@ import { IDelivererService } from '../interfaces/IDelivererService'
 import { IRentPlanRepository } from '../interfaces/IRentPlanRepository'
 import { IRentRepository } from '../interfaces/IRentRepository'
 import { DriverLicenseType, IDelivererModel } from '../../domain/Deliverer'
-import { IRentModel, RentStatus } from '../../domain/Rent'
+import { IRent, IRentModel, RentStatus } from '../../domain/Rent'
 import { CustomError } from '../../utils/handdlers/CustomError'
 import { StatusCodes } from 'http-status-codes'
 import { DateTime } from 'luxon'
+import { FilterQuery } from '../../infrastructure/api/requesters/queries/PaginateQuery'
 
 const mockDelivererService: jest.Mocked<IDelivererService> = {
     findById: jest.fn(),
@@ -21,6 +22,7 @@ const mockRentPlanRepository: jest.Mocked<IRentPlanRepository> = {
 
 const mockRentRepository: jest.Mocked<IRentRepository> = {
     create: jest.fn(),
+    filter: jest.fn(),
 }
 
 describe('RentService', () => {
@@ -150,6 +152,68 @@ describe('RentService', () => {
                 })
             )
             expect(result).toEqual(expectedRent)
+        })
+    })
+
+    describe('paginate', () => {
+        it('should call the repository to paginate rents and return the results', async () => {
+            const mockRents = [
+                {
+                    id: '123',
+                    delivererId: '456',
+                    startDate: new Date('2024-04-30'),
+                    endDate: new Date('2024-05-10'),
+                    plan: { days: 10, dailyRate: 2000 },
+                    status: RentStatus.PROCESSING,
+                    totalCost: 20000,
+                    deliveryForecastDate: new Date('2024-05-10'),
+                } as unknown as IRentModel,
+            ]
+
+            const search = {
+                filters: { delivererId: '456' },
+                paginate: { page: 1, perPage: 10 },
+            } as FilterQuery<Partial<IRent>>
+
+            mockRentRepository.filter.mockResolvedValue(mockRents)
+
+            const result = await service.paginate(search)
+
+            expect(mockRentRepository.filter).toHaveBeenCalledWith(
+                search.filters,
+                search.paginate
+            )
+            expect(result).toEqual(mockRents)
+        })
+
+        it('should return an empty array if no rents are found', async () => {
+            const search = {
+                filters: { status: 'foo-status' },
+                paginate: { page: 1, perPage: 10 },
+            } as unknown as FilterQuery<Partial<IRent>>
+
+            mockRentRepository.filter.mockResolvedValue([])
+
+            const result = await service.paginate(search)
+
+            expect(mockRentRepository.filter).toHaveBeenCalledWith(
+                search.filters,
+                search.paginate
+            )
+            expect(result).toEqual([])
+        })
+
+        it('should handle errors from the repository', async () => {
+            const search = {
+                filters: { delivererId: '456' },
+                paginate: { page: 1, perPage: 10 },
+            } as FilterQuery<Partial<IRent>>
+
+            const error = new Error('Database error')
+
+            mockRentRepository.filter.mockRejectedValue(error)
+
+            await expect(service.paginate(search)).rejects.toThrow(error)
         })
     })
 })

@@ -21,7 +21,7 @@ export interface IRent {
     deliveryForecastDate: Date
     totalCost: number
 
-    status?: RentStatus
+    status: RentStatus
 }
 
 export interface IRentModel extends IRent, Document {}

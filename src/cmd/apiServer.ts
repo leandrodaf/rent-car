@@ -103,6 +103,7 @@ export class APIServer implements ICMD {
         )
 
         this.app.post('/rents', rentController.rent.bind(rentController))
+        this.app.get('/rents', rentController.paginate.bind(rentController))
     }
 
     private setupErrorHandling(): void {

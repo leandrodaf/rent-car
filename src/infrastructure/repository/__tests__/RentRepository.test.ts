@@ -1,7 +1,12 @@
 import { IRent, IRentModel, Rent } from '../../../domain/Rent'
 import { RentRepository } from '../RentRepository'
+import { buildPaginate } from '../Paginate'
 
 jest.mock('../../../domain/Rent')
+
+jest.mock('../Paginate', () => ({
+    buildPaginate: jest.fn((paginate, query) => query),
+}))
 
 describe('RentRepository', () => {
     let rentRepository: RentRepository
@@ -42,6 +47,48 @@ describe('RentRepository', () => {
             )
 
             expect(Rent.create).toHaveBeenCalledWith(mockRentData)
+        })
+    })
+
+    describe('filter', () => {
+        it('must filter using mongoose APIs with pagination', async () => {
+            const filters = { delivererId: '123' } as Partial<IRent>
+            const paginate = { page: 1, perPage: 10 }
+
+            const execMock = jest.fn().mockResolvedValue([])
+
+            Rent.find = jest.fn().mockImplementation(() => ({
+                exec: execMock,
+            }))
+
+            await rentRepository.filter(filters, paginate)
+
+            expect(buildPaginate).toHaveBeenCalledWith(
+                paginate,
+                expect.anything()
+            )
+            expect(Rent.find).toHaveBeenCalledWith(filters)
+            expect(execMock).toHaveBeenCalled()
+        })
+
+        it('should handle empty filters correctly', async () => {
+            const filters = null // Test empty filters
+            const paginate = { page: 2, perPage: 5 }
+
+            const execMock = jest.fn().mockResolvedValue([])
+
+            Rent.find = jest.fn().mockImplementation(() => ({
+                exec: execMock,
+            }))
+
+            await rentRepository.filter(filters, paginate)
+
+            expect(buildPaginate).toHaveBeenCalledWith(
+                paginate,
+                expect.anything()
+            )
+            expect(Rent.find).toHaveBeenCalledWith({})
+            expect(execMock).toHaveBeenCalled()
         })
     })
 })
