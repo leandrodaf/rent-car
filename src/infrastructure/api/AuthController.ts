@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import { IAuthService } from '../../application/interfaces/IAuthService'
-import { LoginRequest } from './requesters/CreateLogin'
 import { ErrorHandler } from './decorators/ErrorHandler'
+import { LoginRequest } from './requesters/LoginRequest'
 
 export class AuthController {
     constructor(private readonly authService: IAuthService) {}
