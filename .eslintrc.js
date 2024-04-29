@@ -35,5 +35,6 @@ module.exports = {
         '@typescript-eslint/no-unsafe-return': 'off',
         '@typescript-eslint/no-floating-promises': 'off',
         'prettier/prettier': 'error',
+        '@typescript-eslint/no-misused-promises': 'off',
     },
 }
