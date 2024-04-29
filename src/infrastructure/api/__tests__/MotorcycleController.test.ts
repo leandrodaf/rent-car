@@ -13,6 +13,7 @@ describe('MotorcycleController', () => {
     beforeEach(() => {
         mockMotorcycleService = {
             create: jest.fn(),
+            paginate: jest.fn(),
         }
 
         motorcycleData = {
@@ -65,6 +66,57 @@ describe('MotorcycleController', () => {
             mockMotorcycleService.create.mockRejectedValue(error)
 
             await controller.store(req, res, next)
+
+            expect(next).toHaveBeenCalledWith(expect.any(ZodError))
+        })
+    })
+
+    describe('paginate', () => {
+        it('should successfully fetch paginated results and return them', async () => {
+            const { req, res, next } = createMockReqRes({
+                query: { page: '1', perPage: '10' },
+                auth: {
+                    userType: UserType.ADMIN,
+                },
+            })
+
+            const mockPaginatedData = {
+                ...motorcycleData,
+            } as unknown as IMotorcycleModel
+
+            mockMotorcycleService.paginate.mockResolvedValue([
+                mockPaginatedData,
+            ])
+
+            await controller.paginate(req, res, next)
+
+            expect(mockMotorcycleService.paginate).toHaveBeenCalledWith({
+                filters: {},
+                paginate: { page: 1, perPage: 10 },
+            })
+            expect(res.status).toHaveBeenCalledWith(200)
+            expect(res.json).toHaveBeenCalledWith({
+                data: [mockPaginatedData],
+                paginate: {
+                    page: 1,
+                    perPage: 10,
+                },
+            })
+        })
+
+        it('should handle errors if pagination fails due to service layer failure', async () => {
+            const { req, res, next } = createMockReqRes({
+                query: {
+                    page: '1',
+                    perPage: '10',
+                    plate: '1',
+                },
+                auth: {
+                    userType: UserType.ADMIN,
+                },
+            })
+
+            await controller.paginate(req, res, next)
 
             expect(next).toHaveBeenCalledWith(expect.any(ZodError))
         })

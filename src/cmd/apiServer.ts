@@ -73,6 +73,11 @@ export class APIServer implements ICMD {
             '/motorcycles',
             motorcycleController.store.bind(motorcycleController)
         )
+
+        this.app.get(
+            '/motorcycles',
+            motorcycleController.paginate.bind(motorcycleController)
+        )
     }
 
     private setupErrorHandling(): void {
