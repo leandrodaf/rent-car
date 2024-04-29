@@ -11,6 +11,9 @@ import { DelivererService } from '../application/DelivererService'
 import { upload } from '../infrastructure/api/MulterUpload'
 import { AuthMiddleware } from '../infrastructure/api/middlewares/AuthMiddleware'
 import { S3Client } from '../infrastructure/storage/S3Client'
+import { MotorcycleController } from '../infrastructure/api/MotorcycleController'
+import { MotorcycleService } from '../application/MotorcycleService'
+import { MotorcycleRespository } from '../infrastructure/repository/MotorcycleRespository'
 
 export class APIServer implements ICMD {
     private app: express.Application
@@ -26,6 +29,7 @@ export class APIServer implements ICMD {
 
         const userRepository = new UserRepository()
         const delivererRepository = new DelivererRepository()
+        const motorcycleRespository = new MotorcycleRespository()
 
         const authService = new AuthService(userRepository)
         const delivererService = new DelivererService(
@@ -33,9 +37,12 @@ export class APIServer implements ICMD {
             storage
         )
 
+        const motorcycleService = new MotorcycleService(motorcycleRespository)
+
         const authController = new AuthController(authService)
 
         const delivererController = new DelivererController(delivererService)
+        const motorcycleController = new MotorcycleController(motorcycleService)
 
         const authMiddleware = new AuthMiddleware(authService)
 
@@ -60,6 +67,11 @@ export class APIServer implements ICMD {
             '/deliverers/attach',
             upload.single('file'),
             delivererController.attachLicenseImage.bind(delivererController)
+        )
+
+        this.app.post(
+            '/motorcycles',
+            motorcycleController.store.bind(motorcycleController)
         )
     }
 
