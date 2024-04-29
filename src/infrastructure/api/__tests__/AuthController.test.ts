@@ -9,6 +9,7 @@ describe('AuthController', () => {
     beforeEach(() => {
         mockAuthService = {
             authenticate: jest.fn(),
+            verifyToken: jest.fn(),
         }
         authController = new AuthController(mockAuthService)
     })

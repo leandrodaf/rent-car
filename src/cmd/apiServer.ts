@@ -8,6 +8,9 @@ import { ErrorHandlingMiddleware } from '../infrastructure/api/middlewares/Error
 import { DelivererController } from '../infrastructure/api/DelivererController'
 import { DelivererRepository } from '../infrastructure/repository/DelivererRepository'
 import { DelivererService } from '../application/DelivererService'
+import { upload } from '../infrastructure/api/MulterUpload'
+import { AuthMiddleware } from '../infrastructure/api/middlewares/AuthMiddleware'
+import { S3Client } from '../infrastructure/storage/S3Client'
 
 export class APIServer implements ICMD {
     private app: express.Application
@@ -19,17 +22,27 @@ export class APIServer implements ICMD {
     }
 
     private setupRoutes(): void {
+        const storage = new S3Client()
+
         const userRepository = new UserRepository()
         const delivererRepository = new DelivererRepository()
 
         const authService = new AuthService(userRepository)
-        const delivererService = new DelivererService(delivererRepository)
+        const delivererService = new DelivererService(
+            delivererRepository,
+            storage
+        )
 
         const authController = new AuthController(authService)
 
         const delivererController = new DelivererController(delivererService)
 
+        const authMiddleware = new AuthMiddleware(authService)
+
         this.app.use(express.json())
+
+        // Middlewares
+        this.app.use(authMiddleware.middleware.bind(authMiddleware))
 
         this.app.post('/auth/login', authController.login.bind(authController))
 
@@ -41,6 +54,12 @@ export class APIServer implements ICMD {
         this.app.get(
             '/deliverers',
             delivererController.paginate.bind(delivererController)
+        )
+
+        this.app.post(
+            '/deliverers/attach',
+            upload.single('file'),
+            delivererController.attachLicenseImage.bind(delivererController)
         )
     }
 

@@ -1,9 +1,13 @@
 import { NextFunction, Request, Response } from 'express'
+import { JWTToken } from '../../application/interfaces/IAuthService'
 
 interface MockReqOptions {
     body?: Record<string, any>
     params?: Record<string, string>
     query?: Record<string, string>
+    file?: Express.Multer.File | undefined
+    headers?: Record<string, string> | undefined
+    auth?: JWTToken
 }
 
 /**
@@ -13,7 +17,7 @@ interface MockReqOptions {
  * @param options - Optional parameters to customize the request.
  * @returns An object containing the mocked req and res objects.
  */
-export function createMockReqRes(options: MockReqOptions = {}): {
+export function createMockReqRes(options: MockReqOptions): {
     req: Request
     res: Response
     next: NextFunction
@@ -22,6 +26,9 @@ export function createMockReqRes(options: MockReqOptions = {}): {
         body: options.body || {},
         params: options.params || {},
         query: options.query || {},
+        file: options.file || undefined,
+        headers: options.headers || {},
+        auth: options.auth || {},
     } as Request
 
     const res = {

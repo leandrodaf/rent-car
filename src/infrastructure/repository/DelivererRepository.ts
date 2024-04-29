@@ -3,6 +3,20 @@ import { Deliverer, IDeliverer, IDelivererModel } from '../../domain/Deliverer'
 import { buildPaginate } from './Paginate'
 
 export class DelivererRepository implements IDelivererRepository {
+    findById(id: string): Promise<IDelivererModel | null> {
+        return Deliverer.findById(id)
+    }
+
+    update(
+        id: string,
+        data: Partial<IDeliverer>
+    ): Promise<IDelivererModel | null> {
+        return Deliverer.findOneAndUpdate({ _id: id }, data, {
+            new: true,
+            runValidators: true,
+        })
+    }
+
     filter(
         filters: Partial<IDeliverer> | null,
         paginate?: { page: number; perPage: number } | undefined

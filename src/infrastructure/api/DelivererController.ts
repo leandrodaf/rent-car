@@ -8,10 +8,15 @@ import {
 import { DelivererResource } from './resources/DelivererResource'
 import { getQueries } from './requesters/queries/PaginateQuery'
 import { DelivererQuery } from './requesters/queries/DelivererQuery'
+import { CustomError } from '../../utils/handdlers/CustomError'
+import { StatusCodes } from 'http-status-codes'
+import { Authorize } from './decorators/Authorize'
+import { UserType } from '../../domain/User'
 
 export class DelivererController {
     constructor(private readonly delivererService: IDelivererService) {}
 
+    @Authorize([UserType.WEB])
     @ErrorHandler()
     public async register(
         req: Request,
@@ -26,6 +31,7 @@ export class DelivererController {
         response.status(201).json({ data: new DelivererResource(deliverer) })
     }
 
+    @Authorize([UserType.ADMIN])
     @ErrorHandler()
     public async paginate(
         req: Request,
@@ -40,5 +46,27 @@ export class DelivererController {
             data: result.map((item) => new DelivererResource(item)),
             paginate: query.paginate,
         })
+    }
+
+    @Authorize([UserType.DELIVERER])
+    @ErrorHandler()
+    public async attachLicenseImage(
+        req: Request,
+        response: Response,
+        next: NextFunction
+    ) {
+        const file = req?.file
+
+        if (!file) {
+            throw new CustomError('The file is required')
+        }
+
+        if (!req.auth._id) {
+            throw new CustomError('Unidentified user', StatusCodes.FORBIDDEN)
+        }
+
+        await this.delivererService.attachDocument(req.auth._id, file)
+
+        response.status(204).send()
     }
 }

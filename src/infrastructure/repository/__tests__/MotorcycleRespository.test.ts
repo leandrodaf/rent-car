@@ -6,7 +6,7 @@ import {
     IDelivererModel,
 } from '../../../domain/Deliverer'
 import { UserType } from '../../../domain/User'
-import { DelivererRepository } from '../../repository/DelivererRepository'
+import { DelivererRepository } from '../DelivererRepository'
 import { buildPaginate } from '../Paginate'
 
 jest.mock('../../../domain/Deliverer')
@@ -15,7 +15,7 @@ jest.mock('../Paginate', () => ({
     buildPaginate: jest.fn((paginate, query) => query),
 }))
 
-describe('DelivererRepository', () => {
+describe('MotorcycleRespository', () => {
     let delivererRepository: IDelivererRepository
 
     beforeEach(() => {
@@ -23,7 +23,7 @@ describe('DelivererRepository', () => {
         delivererRepository = new DelivererRepository()
     })
 
-    describe('findOne', () => {
+    describe('create', () => {
         it('should return a user when findByEmail is called with an existing email', async () => {
             const mockDeliverer = {} as IDelivererModel
 

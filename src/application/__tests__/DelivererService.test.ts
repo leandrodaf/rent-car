@@ -7,10 +7,21 @@ import { UserType } from '../../domain/User'
 import { FilterQuery } from '../../infrastructure/api/requesters/queries/PaginateQuery'
 import { DelivererService } from '../DelivererService'
 import { IDelivererRepository } from '../interfaces/IDelivererRepository'
+import { IStorage } from '../../infrastructure/storage/IStorage'
+import { CustomError } from '../../utils/handdlers/CustomError'
+import { StatusCodes } from 'http-status-codes'
+import config from '../../config'
 
 const mockDelivererRepository: IDelivererRepository = {
     create: jest.fn(),
     filter: jest.fn(),
+    findById: jest.fn(),
+    update: jest.fn(),
+}
+
+const mockStorage: IStorage = {
+    uploadFile: jest.fn(),
+    deleteFile: jest.fn(),
 }
 
 describe('DelivererService', () => {
@@ -19,17 +30,13 @@ describe('DelivererService', () => {
     beforeEach(() => {
         jest.clearAllMocks()
 
-        service = new DelivererService(mockDelivererRepository)
+        service = new DelivererService(mockDelivererRepository, mockStorage)
     })
 
     describe('create', () => {
         let testDeliverer: IDeliverer
 
         beforeEach(() => {
-            jest.clearAllMocks()
-
-            service = new DelivererService(mockDelivererRepository)
-
             testDeliverer = {
                 name: 'foo',
                 driverLicenseImageURL: 'http://example.com/license.jpg',
@@ -64,12 +71,6 @@ describe('DelivererService', () => {
     })
 
     describe('paginate', () => {
-        beforeEach(() => {
-            jest.clearAllMocks()
-
-            service = new DelivererService(mockDelivererRepository)
-        })
-
         it('must call the repository and return an empty list', async () => {
             const mockResponse: IDelivererModel[] = []
 
@@ -125,6 +126,80 @@ describe('DelivererService', () => {
             )
 
             expect(result).toEqual(mockResponse)
+        })
+    })
+
+    describe('attachDocument', () => {
+        const multerFile = {
+            mimetype: 'image/jpeg',
+            buffer: Buffer.from('test'),
+        } as Express.Multer.File
+
+        it('should throw an error if deliverer is not found', async () => {
+            mockDelivererRepository.findById = jest.fn().mockResolvedValue(null)
+
+            await expect(
+                service.attachDocument('1', multerFile)
+            ).rejects.toThrow(
+                new CustomError('Deliverer not found', StatusCodes.NOT_FOUND)
+            )
+        })
+
+        it('should upload a new file if no previous image exists', async () => {
+            const deliverer = { _id: '1', driverLicenseImageURL: null }
+            mockDelivererRepository.findById = jest
+                .fn()
+                .mockResolvedValue(deliverer)
+            mockDelivererRepository.update = jest
+                .fn()
+                .mockResolvedValue(deliverer)
+
+            await service.attachDocument('1', multerFile)
+
+            expect(mockStorage.uploadFile).toHaveBeenCalled()
+            expect(mockDelivererRepository.update).toHaveBeenCalledWith('1', {
+                driverLicenseImageURL: expect.any(String),
+            })
+        })
+
+        it('should delete the old file and upload a new one if a previous image exists', async () => {
+            const deliverer = {
+                _id: '1',
+                driverLicenseImageURL: 'test-bucket/assets/oldFileId.jpg',
+            }
+            mockDelivererRepository.findById = jest
+                .fn()
+                .mockResolvedValue(deliverer)
+            mockDelivererRepository.update = jest
+                .fn()
+                .mockResolvedValue(deliverer)
+
+            await service.attachDocument('1', multerFile)
+
+            expect(mockStorage.deleteFile).toHaveBeenCalledWith(
+                config.storage.s3.bucketName,
+                'test-bucket/assets/oldFileId.jpg'
+            )
+            expect(mockStorage.uploadFile).toHaveBeenCalled()
+            expect(mockDelivererRepository.update).toHaveBeenCalledWith('1', {
+                driverLicenseImageURL: expect.any(String),
+            })
+        })
+
+        it('should handle storage upload errors', async () => {
+            const deliverer = { _id: '1', driverLicenseImageURL: null }
+            mockDelivererRepository.findById = jest
+                .fn()
+                .mockResolvedValue(deliverer)
+            mockStorage.uploadFile = jest
+                .fn()
+                .mockRejectedValue(new Error('Storage failure'))
+
+            await expect(
+                service.attachDocument('1', multerFile)
+            ).rejects.toThrow('Storage failure')
+
+            expect(mockStorage.uploadFile).toHaveBeenCalled()
         })
     })
 })

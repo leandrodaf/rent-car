@@ -29,6 +29,34 @@ describe('AuthService', () => {
         } as IUserModel
     })
 
+    describe('verifyToken', () => {
+        it('must returns the token object successfully', () => {
+            const expectedTokenObject = { foo: 'bar' }
+            jwt.verify = jest.fn().mockReturnValue(expectedTokenObject)
+
+            const token = 'fooToken'
+
+            const result = authService.verifyToken(token)
+            expect(result).toEqual(expectedTokenObject)
+
+            expect(jwt.verify).toHaveBeenCalledWith(token, 'token-token')
+        })
+
+        it('It should call the jwt validator and return an error', () => {
+            jwt.verify = jest.fn().mockImplementation(() => {
+                throw new Error('foo erro')
+            })
+
+            const token = 'fooToken'
+
+            expect(() => authService.verifyToken(token)).toThrow(
+                'Invalid token'
+            )
+
+            expect(jwt.verify).toHaveBeenCalledWith(token, 'token-token')
+        })
+    })
+
     describe('authenticate', () => {
         it('should authenticate user successfully', async () => {
             userRepositoryMock.findByEmail.mockResolvedValue(userMock)

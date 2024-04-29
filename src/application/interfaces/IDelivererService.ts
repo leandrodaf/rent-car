@@ -7,4 +7,9 @@ export interface IDelivererService {
     paginate(
         search: FilterQuery<Partial<IDeliverer>>
     ): Promise<IDelivererModel[]>
+
+    attachDocument(
+        id: string,
+        file: Express.Multer.File
+    ): Promise<IDelivererModel>
 }

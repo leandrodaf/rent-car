@@ -8,4 +8,11 @@ export interface IDelivererRepository {
         filters: Partial<IDeliverer> | null,
         paginate?: PaginateQueryType
     ): Promise<IDelivererModel[]>
+
+    findById(id: string): Promise<IDelivererModel | null>
+
+    update(
+        id: string,
+        data: Partial<IDeliverer>
+    ): Promise<IDelivererModel | null>
 }
