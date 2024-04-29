@@ -7,8 +7,13 @@ import {
 } from '../../../domain/Deliverer'
 import { UserType } from '../../../domain/User'
 import { DelivererRepository } from '../../repository/DelivererRepository'
+import { buildPaginate } from '../Paginate'
 
 jest.mock('../../../domain/Deliverer')
+
+jest.mock('../Paginate', () => ({
+    buildPaginate: jest.fn((paginate, query) => query),
+}))
 
 describe('DelivererRepository', () => {
     let delivererRepository: IDelivererRepository
@@ -40,6 +45,26 @@ describe('DelivererRepository', () => {
 
             expect(Deliverer.create).toHaveBeenCalledWith(data)
             expect(result).toEqual(mockDeliverer)
+        })
+    })
+
+    describe('filter', () => {
+        it('Must filter using mongoose apis with pagination', async () => {
+            const filters = null
+            const paginate = { page: 1, perPage: 10 }
+
+            const exec = jest.fn().mockResolvedValue([])
+
+            Deliverer.find = jest.fn().mockImplementation(() => ({ exec }))
+
+            await delivererRepository.filter(filters, paginate)
+
+            expect(buildPaginate).toHaveBeenCalledWith(
+                paginate,
+                expect.anything()
+            )
+            expect(Deliverer.find).toHaveBeenCalledWith({})
+            expect(exec).toHaveBeenCalled()
         })
     })
 })

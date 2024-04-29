@@ -8,29 +8,37 @@ describe('DelivererController', () => {
     let controller: DelivererController
     let mockDelivererService: jest.Mocked<IDelivererService>
 
-    beforeEach(() => {
+    let delivererData = beforeEach(() => {
         mockDelivererService = {
             registerDeliverer: jest.fn(),
+            paginate: jest.fn(),
         }
+
+        delivererData = {
+            email: 'user@example.com',
+            name: 'UserName',
+            cnpj: '65426424000168',
+            birthDate: '2000-01-01',
+            driverLicenseNumber: '34148340222',
+            driverLicenseType: 'A',
+            userType: 'deliverer',
+            driverLicenseImageURL: undefined,
+        }
+
         controller = new DelivererController(mockDelivererService)
     })
 
     describe('register', () => {
         it('should register a deliverer successfully and return the appropriate response', async () => {
-            const delivererData = {
-                email: 'user@example.com',
+            const body = {
+                ...delivererData,
                 password: 'userpass',
                 passwordConfirmation: 'userpass',
-                name: 'UserName',
-                cnpj: '65426424000168',
-                birthDate: '2000-01-01',
-                driverLicenseNumber: '34148340222',
-                driverLicenseType: 'A',
-                userType: 'deliverer',
-                driverLicenseImageURL: undefined,
             }
 
-            const { req, res, next } = createMockReqRes({ body: delivererData })
+            const { req, res, next } = createMockReqRes({
+                body,
+            })
 
             mockDelivererService.registerDeliverer.mockResolvedValue({
                 ...delivererData,
@@ -40,7 +48,7 @@ describe('DelivererController', () => {
             await controller.register(req, res, next)
 
             expect(mockDelivererService.registerDeliverer).toHaveBeenCalledWith(
-                delivererData
+                body
             )
             expect(res.status).toHaveBeenCalledWith(201)
             expect(res.json).toHaveBeenCalledWith({
@@ -61,6 +69,50 @@ describe('DelivererController', () => {
             mockDelivererService.registerDeliverer.mockRejectedValue(error)
 
             await controller.register(req, res, next)
+
+            expect(next).toHaveBeenCalledWith(expect.any(ZodError))
+        })
+    })
+
+    describe('paginate', () => {
+        it('should successfully fetch paginated results and return them', async () => {
+            const { req, res, next } = createMockReqRes({
+                query: { page: '1', perPage: '10' },
+            })
+
+            const mockPaginatedData = {
+                ...delivererData,
+            } as unknown as IDelivererModel
+
+            mockDelivererService.paginate.mockResolvedValue([mockPaginatedData])
+
+            await controller.paginate(req, res, next)
+
+            expect(mockDelivererService.paginate).toHaveBeenCalledWith({
+                filters: {},
+                paginate: { page: 1, perPage: 10 },
+            })
+            expect(res.status).toHaveBeenCalledWith(200)
+            expect(res.json).toHaveBeenCalledWith({
+                data: [mockPaginatedData],
+                paginate: {
+                    page: 1,
+                    perPage: 10,
+                },
+            })
+        })
+
+        it('should handle errors if pagination fails due to service layer failure', async () => {
+            const { req, res, next } = createMockReqRes({
+                query: {
+                    page: '1',
+                    perPage: '10',
+                    cnpj: '7367234000185',
+                    driverLicenseNumber: '123456',
+                },
+            })
+
+            await controller.paginate(req, res, next)
 
             expect(next).toHaveBeenCalledWith(expect.any(ZodError))
         })

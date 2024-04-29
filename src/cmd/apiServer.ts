@@ -37,6 +37,11 @@ export class APIServer implements ICMD {
             '/deliverers',
             delivererController.register.bind(delivererController)
         )
+
+        this.app.get(
+            '/deliverers',
+            delivererController.paginate.bind(delivererController)
+        )
     }
 
     private setupErrorHandling(): void {
