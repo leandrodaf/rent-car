@@ -15,6 +15,10 @@ import { MotorcycleController } from '../infrastructure/api/MotorcycleController
 import { MotorcycleService } from '../application/MotorcycleService'
 import { MotorcycleRespository } from '../infrastructure/repository/MotorcycleRespository'
 import logger from '../utils/logger'
+import { RentController } from '../infrastructure/api/RentController'
+import { RentService } from '../application/RentService'
+import { RentPlanRepository } from '../infrastructure/repository/RentPlanRepository'
+import { RentRepository } from '../infrastructure/repository/RentRepository'
 
 export class APIServer implements ICMD {
     private app: express.Application
@@ -31,6 +35,8 @@ export class APIServer implements ICMD {
         const userRepository = new UserRepository()
         const delivererRepository = new DelivererRepository()
         const motorcycleRespository = new MotorcycleRespository()
+        const rentPlanRepository = new RentPlanRepository()
+        const rentRepository = new RentRepository()
 
         const authService = new AuthService(userRepository)
         const delivererService = new DelivererService(
@@ -39,11 +45,17 @@ export class APIServer implements ICMD {
         )
 
         const motorcycleService = new MotorcycleService(motorcycleRespository)
+        const rentService = new RentService(
+            rentRepository,
+            delivererService,
+            rentPlanRepository
+        )
 
         const authController = new AuthController(authService)
-
         const delivererController = new DelivererController(delivererService)
         const motorcycleController = new MotorcycleController(motorcycleService)
+
+        const rentController = new RentController(rentService)
 
         const authMiddleware = new AuthMiddleware(authService)
 
@@ -89,6 +101,8 @@ export class APIServer implements ICMD {
             '/motorcycles/:plate',
             motorcycleController.delete.bind(motorcycleController)
         )
+
+        this.app.post('/rents', rentController.rent.bind(rentController))
     }
 
     private setupErrorHandling(): void {

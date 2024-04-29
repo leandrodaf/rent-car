@@ -202,4 +202,38 @@ describe('DelivererService', () => {
             expect(mockStorage.uploadFile).toHaveBeenCalled()
         })
     })
+
+    describe('findById', () => {
+        it('should return a deliverer when found', async () => {
+            const mockDeliverer = {
+                _id: '1',
+                cnpj: '12345678901234',
+                birthDate: '1980-01-01',
+                driverLicenseNumber: 'D1234567',
+                driverLicenseType: DriverLicenseType.A,
+                name: 'John Doe',
+                driverLicenseImageURL: 'http://example.com/license.jpg',
+                password: 'securePassword123',
+                email: 'john@example.com',
+                userType: UserType.ADMIN,
+            } as IDelivererModel
+
+            mockDelivererRepository.findById = jest
+                .fn()
+                .mockResolvedValue(mockDeliverer)
+
+            const result = await service.findById('1')
+
+            expect(mockDelivererRepository.findById).toHaveBeenCalledWith('1')
+            expect(result).toEqual(mockDeliverer)
+        })
+
+        it('should throw an error when deliverer not found', async () => {
+            mockDelivererRepository.findById = jest.fn().mockResolvedValue(null)
+
+            await expect(service.findById('999')).rejects.toThrow(
+                new CustomError('Deliverer not found', StatusCodes.NOT_FOUND)
+            )
+        })
+    })
 })

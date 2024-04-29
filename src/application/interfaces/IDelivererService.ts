@@ -12,4 +12,6 @@ export interface IDelivererService {
         id: string,
         file: Express.Multer.File
     ): Promise<IDelivererModel>
+
+    findById(id: string): Promise<IDelivererModel>
 }

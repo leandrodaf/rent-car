@@ -15,6 +15,7 @@ describe('DelivererController', () => {
             registerDeliverer: jest.fn(),
             paginate: jest.fn(),
             attachDocument: jest.fn(),
+            findById: jest.fn(),
         }
 
         delivererData = {

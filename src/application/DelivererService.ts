@@ -15,6 +15,16 @@ export class DelivererService implements IDelivererService {
         private readonly storage: IStorage
     ) {}
 
+    async findById(id: string): Promise<IDelivererModel> {
+        const deliverer = await this.delivererRepository.findById(id)
+
+        if (!deliverer) {
+            throw new CustomError('Deliverer not found', StatusCodes.NOT_FOUND)
+        }
+
+        return deliverer
+    }
+
     async attachDocument(
         id: string,
         file: Express.Multer.File
@@ -53,7 +63,7 @@ export class DelivererService implements IDelivererService {
     }
 
     async paginate(
-        search: FilterQuery<Partial<IDeliverer>>
+        search: FilterQuery<Partial<IDelivererModel>>
     ): Promise<IDelivererModel[]> {
         const { filters, paginate } = search
 
