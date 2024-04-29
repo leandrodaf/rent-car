@@ -2,7 +2,7 @@ import { StatusCodes } from 'http-status-codes'
 import { IUserModel } from '../../domain/User'
 import { CustomError } from '../../utils/handdlers/CustomError'
 import { IUserRepository } from '../interfaces/IUserRepository'
-import { AuthService } from '../UserService'
+import { AuthService } from '../AuthService'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 
@@ -17,6 +17,7 @@ describe('AuthService', () => {
     beforeEach(() => {
         userRepositoryMock = {
             findByEmail: jest.fn(),
+            create: jest.fn(),
         }
 
         authService = new AuthService(userRepositoryMock)

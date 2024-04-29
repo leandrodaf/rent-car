@@ -41,9 +41,6 @@ describe('DelivererController', () => {
 
             const { req, res, next } = createMockReqRes({
                 body,
-                auth: {
-                    userType: UserType.WEB,
-                },
             })
 
             mockDelivererService.registerDeliverer.mockResolvedValue({
@@ -69,9 +66,6 @@ describe('DelivererController', () => {
         it('should handle errors if registration fails due to service layer failure', async () => {
             const { req, res, next } = createMockReqRes({
                 body: { email: 'failuser@example.com', password: 'failpass' },
-                auth: {
-                    userType: UserType.WEB,
-                },
             })
 
             const error = new Error('Service failure')

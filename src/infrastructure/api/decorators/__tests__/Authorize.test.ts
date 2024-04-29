@@ -39,16 +39,12 @@ describe('Authorize Decorator', () => {
     })
 
     it('should send a 403 error if userType is not authorized', async () => {
-        req.auth.userType = UserType.WEB
+        req.auth.userType = UserType.ADMIN
 
         const descriptor = {
             value: originalMethod,
         }
-        Authorize([UserType.ADMIN, UserType.DELIVERER])(
-            null,
-            'testMethod',
-            descriptor
-        )
+        Authorize([UserType.DELIVERER])(null, 'testMethod', descriptor)
 
         await descriptor.value(req, res, next)
 

@@ -1,7 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import prompts from 'prompts'
 import { APIServer } from './cmd/apiServer'
 import { ConsumerServer } from './cmd/consumerServer'
 import logger from './utils/logger'
+import { Commands } from './cmd/commands'
 
 async function chooseServerInteractively() {
     const response = await prompts({
@@ -11,6 +14,7 @@ async function chooseServerInteractively() {
         choices: [
             { title: 'API Server', value: 'api' },
             { title: 'Consumer Server', value: 'consumer' },
+            { title: 'App commands', value: 'commands' },
         ],
         initial: 0,
     })
@@ -22,13 +26,15 @@ function startServer(serverType: string) {
     switch (serverType) {
         case 'api':
             logger.info('Starting API Server...')
-            const apiServer = new APIServer()
-            apiServer.start()
+            new APIServer().start()
             break
         case 'consumer':
             logger.info('Starting Consumer Server...')
-            const consumerServer = new ConsumerServer()
-            consumerServer.start()
+            new ConsumerServer().start()
+            break
+        case 'commands':
+            logger.info('Starting the application commands...')
+            new Commands().start()
             break
         default:
             logger.info('Invalid server type specified.')

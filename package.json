@@ -8,7 +8,7 @@
         "lint": "eslint src/**/*.ts --fix",
         "prettier": "npx prettier --write .",
         "format": "npm run prettier && npm run lint",
-        "start": "ts-node src",
+        "start": "ts-node --project tsconfig.json --files src",
         "start:api": "ts-node src/cmd/apiServer.ts",
         "start:consumer": "ts-node src/cmd/consumerServer.ts"
     },

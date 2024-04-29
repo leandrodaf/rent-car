@@ -5,7 +5,6 @@ import { model, Schema, Document } from 'mongoose'
 export enum UserType {
     ADMIN = 'admin',
     DELIVERER = 'deliverer',
-    WEB = 'web',
 }
 
 export interface IUser {

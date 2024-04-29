@@ -1,7 +1,7 @@
 import express from 'express'
 import { ICMD } from './ICMD'
 import { UserRepository } from '../infrastructure/repository/UserRepository'
-import { AuthService } from '../application/UserService'
+import { AuthService } from '../application/AuthService'
 import { AuthController } from '../infrastructure/api/AuthController'
 import { MongoConnectionManager } from '../infrastructure/database/MongoConnectionManager'
 import { ErrorHandlingMiddleware } from '../infrastructure/api/middlewares/ErrorHandlingMiddleware'
@@ -14,6 +14,7 @@ import { S3Client } from '../infrastructure/storage/S3Client'
 import { MotorcycleController } from '../infrastructure/api/MotorcycleController'
 import { MotorcycleService } from '../application/MotorcycleService'
 import { MotorcycleRespository } from '../infrastructure/repository/MotorcycleRespository'
+import logger from '../utils/logger'
 
 export class APIServer implements ICMD {
     private app: express.Application
@@ -100,7 +101,7 @@ export class APIServer implements ICMD {
         const port = process.env.PORT || 3000
 
         this.app.listen(port, () => {
-            console.log(`API Server listening on port ${port}`)
+            logger.info(`API Server listening on port ${port}`)
         })
     }
 }

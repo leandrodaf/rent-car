@@ -16,7 +16,6 @@ import { UserType } from '../../domain/User'
 export class DelivererController {
     constructor(private readonly delivererService: IDelivererService) {}
 
-    @Authorize([UserType.WEB])
     @ErrorHandler()
     public async register(
         req: Request,

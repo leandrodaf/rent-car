@@ -7,5 +7,5 @@ up:
 down:
 	docker-compose down
 
-helpers:
-	docker-compose exec app npm run helpers
+commands:
+	docker-compose exec app npm run start
