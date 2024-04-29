@@ -79,4 +79,41 @@ describe('MotorcycleRepository', () => {
             )
         })
     })
+
+    describe('delete', () => {
+        it('should delete the motorcycle and return the deleted motorcycle model when found', async () => {
+            const expectedMotorcycleModel = {
+                plate: 'example-plate',
+                year: 2024,
+                modelName: 'foo',
+                _id: '1',
+            } as IMotorcycleModel
+
+            Motorcycle.findOneAndDelete = jest
+                .fn()
+                .mockResolvedValue(expectedMotorcycleModel)
+
+            const searchCriteria = { plate: 'example-plate' }
+
+            const result = await motorcycleRepository.delete(searchCriteria)
+
+            expect(Motorcycle.findOneAndDelete).toHaveBeenCalledWith(
+                searchCriteria
+            )
+            expect(result).toEqual(expectedMotorcycleModel)
+        })
+
+        it('should return null when no motorcycle is found', async () => {
+            Motorcycle.findOneAndDelete = jest.fn().mockResolvedValue(null)
+
+            const searchCriteria = { plate: 'non-existent-plate' }
+
+            const result = await motorcycleRepository.delete(searchCriteria)
+
+            expect(Motorcycle.findOneAndDelete).toHaveBeenCalledWith(
+                searchCriteria
+            )
+            expect(result).toBeNull()
+        })
+    })
 })

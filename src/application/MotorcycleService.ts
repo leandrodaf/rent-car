@@ -10,6 +10,16 @@ export class MotorcycleService implements IMotorcycleService {
         private readonly motorcycleRespository: IMotorcycleRespository
     ) {}
 
+    async delete(search: Partial<IMotorcycle>): Promise<IMotorcycleModel> {
+        const motorcycle = await this.motorcycleRespository.delete(search)
+
+        if (!motorcycle) {
+            throw new CustomError('Motorcycle not found', StatusCodes.NOT_FOUND)
+        }
+
+        return motorcycle
+    }
+
     async updateBy(
         search: Partial<IMotorcycle>,
         data: Partial<IMotorcycle>

@@ -13,4 +13,6 @@ export interface IMotorcycleRespository {
         search: Partial<IMotorcycle>,
         data: Partial<IMotorcycle>
     ): Promise<IMotorcycleModel | null>
+
+    delete(search: Partial<IMotorcycle>): Promise<IMotorcycleModel | null>
 }

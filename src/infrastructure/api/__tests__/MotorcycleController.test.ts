@@ -15,6 +15,7 @@ describe('MotorcycleController', () => {
             create: jest.fn(),
             paginate: jest.fn(),
             updateBy: jest.fn(),
+            delete: jest.fn(),
         }
 
         motorcycleData = {
@@ -159,6 +160,49 @@ describe('MotorcycleController', () => {
             await controller.updatePlate(req, res, next)
 
             expect(next).toHaveBeenCalledWith(expect.any(ZodError))
+        })
+    })
+
+    describe('delete', () => {
+        it('should successfully delete a motorcycle and return status 200', async () => {
+            const { req, res, next } = createMockReqRes({
+                params: {
+                    plate: 'XYZ1A21',
+                },
+                auth: {
+                    userType: UserType.ADMIN,
+                },
+            })
+
+            mockMotorcycleService.delete = jest
+                .fn()
+                .mockResolvedValue(undefined)
+
+            await controller.delete(req, res, next)
+
+            expect(mockMotorcycleService.delete).toHaveBeenCalledWith({
+                plate: 'XYZ1A21',
+            })
+            expect(res.status).toHaveBeenCalledWith(200)
+            expect(res.send).toHaveBeenCalled()
+        })
+
+        it('should handle errors if delete operation fails due to service layer failure', async () => {
+            const { req, res, next } = createMockReqRes({
+                params: {
+                    plate: 'XYZ1A21',
+                },
+                auth: {
+                    userType: UserType.ADMIN,
+                },
+            })
+
+            const error = new Error('Service failure')
+            mockMotorcycleService.delete.mockRejectedValue(error)
+
+            await controller.delete(req, res, next)
+
+            expect(next).toHaveBeenCalledWith(error)
         })
     })
 })

@@ -54,4 +54,14 @@ export class MotorcycleController {
 
         response.status(200).send()
     }
+
+    @Authorize([UserType.ADMIN])
+    @ErrorHandler()
+    async delete(req: Request, response: Response, next: NextFunction) {
+        const { plate } = await getParams(req, UpdateMotorcycleRequest)
+
+        await this.motorcycleService.delete({ plate })
+
+        response.status(200).send()
+    }
 }

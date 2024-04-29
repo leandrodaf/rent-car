@@ -9,28 +9,29 @@ const motorcycleRespository: IMotorcycleRespository = {
     create: jest.fn(),
     filter: jest.fn(),
     update: jest.fn(),
+    delete: jest.fn(),
 }
 
 describe('MotorcycleService', () => {
     let service: MotorcycleService
 
+    const testMotorcycle: IMotorcycle = {
+        plate: 'example-plate',
+        year: 2024,
+        modelName: 'foo',
+    }
+
+    const updatedMotorcycle: IMotorcycleModel = {
+        ...testMotorcycle,
+        _id: '1',
+    } as IMotorcycleModel
+
     beforeEach(() => {
         jest.clearAllMocks()
-
         service = new MotorcycleService(motorcycleRespository)
     })
 
     describe('create', () => {
-        let testMotorcycle: IMotorcycle
-
-        beforeEach(() => {
-            testMotorcycle = {
-                plate: 'example-plate',
-                year: 2024,
-                modelName: 'foo',
-            }
-        })
-
         it('should call the create method on the deliverer repository with the correct deliverer data', async () => {
             const expectedMotorcycleModel = {
                 ...testMotorcycle,
@@ -110,24 +111,6 @@ describe('MotorcycleService', () => {
     })
 
     describe('updateBy', () => {
-        let service: MotorcycleService
-
-        const testMotorcycle: IMotorcycle = {
-            plate: 'example-plate',
-            year: 2024,
-            modelName: 'foo',
-        }
-
-        const updatedMotorcycle: IMotorcycleModel = {
-            ...testMotorcycle,
-            _id: '1',
-        } as IMotorcycleModel
-
-        beforeEach(() => {
-            jest.clearAllMocks()
-            service = new MotorcycleService(motorcycleRespository)
-        })
-
         it('should update the motorcycle and return the updated model when motorcycle is found', async () => {
             const searchCriteria = { plate: 'example-plate' }
             const newData = { year: 2025 }
@@ -153,6 +136,36 @@ describe('MotorcycleService', () => {
 
             await expect(
                 service.updateBy(searchCriteria, newData)
+            ).rejects.toThrow(
+                new CustomError('Motorcycle not found', StatusCodes.NOT_FOUND)
+            )
+        })
+    })
+
+    describe('delete', () => {
+        it('should delete the motorcycle and return the deleted motorcycle model when motorcycle is found', async () => {
+            const expectedMotorcycleModel = {
+                ...testMotorcycle,
+                _id: '1',
+            } as IMotorcycleModel
+
+            motorcycleRespository.delete = jest
+                .fn()
+                .mockResolvedValue(expectedMotorcycleModel)
+
+            const result = await service.delete({ plate: 'example-plate' })
+
+            expect(motorcycleRespository.delete).toHaveBeenCalledWith({
+                plate: 'example-plate',
+            })
+            expect(result).toEqual(expectedMotorcycleModel)
+        })
+
+        it('should throw a CustomError with status 404 when no motorcycle is found', async () => {
+            motorcycleRespository.delete = jest.fn().mockResolvedValue(null)
+
+            await expect(
+                service.delete({ plate: 'non-existent-plate' })
             ).rejects.toThrow(
                 new CustomError('Motorcycle not found', StatusCodes.NOT_FOUND)
             )

@@ -7,6 +7,10 @@ import {
 import { buildPaginate } from './Paginate'
 
 export class MotorcycleRespository implements IMotorcycleRespository {
+    delete(search: Partial<IMotorcycle>): Promise<IMotorcycleModel | null> {
+        return Motorcycle.findOneAndDelete(search)
+    }
+
     update(
         search: Partial<IMotorcycle>,
         data: Partial<IMotorcycle>

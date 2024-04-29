@@ -83,6 +83,11 @@ export class APIServer implements ICMD {
             '/motorcycles/:plate',
             motorcycleController.updatePlate.bind(motorcycleController)
         )
+
+        this.app.delete(
+            '/motorcycles/:plate',
+            motorcycleController.delete.bind(motorcycleController)
+        )
     }
 
     private setupErrorHandling(): void {

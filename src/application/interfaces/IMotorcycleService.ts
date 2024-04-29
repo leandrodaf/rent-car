@@ -12,4 +12,6 @@ export interface IMotorcycleService {
         search: Partial<IMotorcycle>,
         data: Partial<IMotorcycle>
     ): Promise<IMotorcycleModel>
+
+    delete(search: Partial<IMotorcycle>): Promise<IMotorcycleModel>
 }
