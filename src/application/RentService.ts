@@ -11,6 +11,8 @@ import { FilterQuery } from '../infrastructure/api/requesters/queries/PaginateQu
 import { inject, injectable } from 'inversify'
 import { TYPES } from '../config/types'
 import { IMessage } from '../infrastructure/message/IMessage'
+import { IMotorcycleService } from './interfaces/IMotorcycleService'
+import logger from '../utils/logger'
 
 @injectable()
 export class RentService implements IRentService {
@@ -21,6 +23,9 @@ export class RentService implements IRentService {
         private readonly delivererService: IDelivererService,
         @inject(TYPES.RentPlanRepository)
         private readonly rentPlanRepository: IRentPlanRepository,
+
+        @inject(TYPES.MotorcycleService)
+        private readonly motorcycleService: IMotorcycleService,
 
         @inject(TYPES.Message)
         private readonly message: IMessage
@@ -99,5 +104,35 @@ export class RentService implements IRentService {
         ])
 
         return created
+    }
+
+    async processRentCreated(message: string) {
+        const rental = JSON.parse(message) as IRentModel
+
+        const rentalId = rental._id as string
+
+        let updatedRental
+        try {
+            const motorcycle = await this.motorcycleService.getAvailability()
+
+            updatedRental = await this.rentRepository.update(rentalId, {
+                motorcycle,
+                status: RentStatus.RENTED,
+            })
+        } catch (error) {
+            logger.error('It was not possible to rent', error)
+
+            updatedRental = await this.rentRepository.update(rentalId, {
+                status: RentStatus.REJECTED,
+            })
+        }
+
+        if (updatedRental) {
+            await this.message.sendMessage('rental-updated', [
+                { value: JSON.stringify(updatedRental.toJSON()) },
+            ])
+        }
+
+        return updatedRental
     }
 }

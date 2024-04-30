@@ -9,6 +9,7 @@ import { StatusCodes } from 'http-status-codes'
 import { DateTime } from 'luxon'
 import { FilterQuery } from '../../infrastructure/api/requesters/queries/PaginateQuery'
 import { IMessage } from '../../infrastructure/message/IMessage'
+import { IMotorcycleService } from '../interfaces/IMotorcycleService'
 
 const mockDelivererService: jest.Mocked<IDelivererService> = {
     findById: jest.fn(),
@@ -26,6 +27,14 @@ const mockRentRepository: jest.Mocked<IRentRepository> = {
     filter: jest.fn(),
     findRentedByPlate: jest.fn(),
     update: jest.fn(),
+}
+
+const mockMotorcycleService: jest.Mocked<IMotorcycleService> = {
+    create: jest.fn(),
+    paginate: jest.fn(),
+    updateBy: jest.fn(),
+    delete: jest.fn(),
+    getAvailability: jest.fn(),
 }
 
 const mockMessage: jest.Mocked<IMessage> = {
@@ -58,6 +67,7 @@ describe('RentService', () => {
             mockRentRepository,
             mockDelivererService,
             mockRentPlanRepository,
+            mockMotorcycleService,
             mockMessage
         )
     })
@@ -221,6 +231,106 @@ describe('RentService', () => {
             mockRentRepository.filter.mockRejectedValue(error)
 
             await expect(service.paginate(search)).rejects.toThrow(error)
+        })
+    })
+
+    describe('processRentalCreated', () => {
+        it('should successfully assign a motorcycle and update rental to RENTED', async () => {
+            const rental = {
+                _id: 'rental1',
+                status: RentStatus.PROCESSING,
+                toJSON: () => ({ _id: 'rental1', status: RentStatus.RENTED }),
+            } as unknown as IRentModel
+
+            const motorcycle = {
+                _id: 'motorcycle1',
+            }
+
+            mockMotorcycleService.getAvailability = jest
+                .fn()
+                .mockResolvedValue(motorcycle)
+            mockRentRepository.update = jest.fn().mockResolvedValue({
+                ...rental,
+                motorcycle,
+                status: RentStatus.RENTED,
+            })
+
+            await service.processRentCreated(JSON.stringify(rental))
+
+            expect(mockMotorcycleService.getAvailability).toHaveBeenCalled()
+            expect(mockRentRepository.update).toHaveBeenCalledWith('rental1', {
+                motorcycle,
+                status: RentStatus.RENTED,
+            })
+            expect(mockMessage.sendMessage).toHaveBeenCalledWith(
+                'rental-updated',
+                [
+                    {
+                        value: JSON.stringify({
+                            _id: 'rental1',
+                            status: RentStatus.RENTED,
+                        }),
+                    },
+                ]
+            )
+        })
+
+        it('should fail to assign a motorcycle and update rental to REJECTED', async () => {
+            const rental = {
+                _id: 'rental1',
+                status: RentStatus.PROCESSING,
+                toJSON: () => ({ _id: 'rental1', status: RentStatus.REJECTED }),
+            } as unknown as IRentModel
+
+            mockMotorcycleService.getAvailability = jest
+                .fn()
+                .mockRejectedValue(new Error('No available motorcycles'))
+            mockRentRepository.update = jest.fn().mockResolvedValue({
+                ...rental,
+                status: RentStatus.REJECTED,
+            })
+
+            await service.processRentCreated(JSON.stringify(rental))
+
+            expect(mockMotorcycleService.getAvailability).toHaveBeenCalled()
+            expect(mockRentRepository.update).toHaveBeenCalledWith('rental1', {
+                status: RentStatus.REJECTED,
+            })
+            expect(mockMessage.sendMessage).toHaveBeenCalledWith(
+                'rental-updated',
+                [
+                    {
+                        value: JSON.stringify({
+                            _id: 'rental1',
+                            status: RentStatus.REJECTED,
+                        }),
+                    },
+                ]
+            )
+        })
+
+        it('should log an error if updating the rental fails', async () => {
+            const rental = {
+                _id: 'rental1',
+                status: RentStatus.PROCESSING,
+                toJSON: () => ({
+                    _id: 'rental1',
+                    status: RentStatus.PROCESSING,
+                }),
+            } as unknown as IRentModel
+
+            mockMotorcycleService.getAvailability = jest
+                .fn()
+                .mockResolvedValue({})
+            mockRentRepository.update = jest
+                .fn()
+                .mockRejectedValue(new Error('Update failed'))
+
+            await expect(
+                service.processRentCreated(JSON.stringify(rental))
+            ).rejects.toThrow('Update failed')
+
+            expect(mockMotorcycleService.getAvailability).toHaveBeenCalled()
         })
     })
 })

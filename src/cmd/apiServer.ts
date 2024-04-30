@@ -4,7 +4,7 @@ import { upload } from '../infrastructure/api/MulterUpload'
 import { MongoConnectionManager } from '../infrastructure/database/MongoConnectionManager'
 import { ErrorHandlingMiddleware } from '../infrastructure/api/middlewares/ErrorHandlingMiddleware'
 import logger from '../utils/logger'
-import { myContainer } from '../config/inversify.config'
+import { rentContainer } from '../config/inversify.config'
 import { TYPES } from '../config/types'
 import { AuthMiddleware } from '../infrastructure/api/middlewares/AuthMiddleware'
 import kafka from '../infrastructure/database/KafkaConnectionManager'
@@ -31,7 +31,7 @@ export class APIServer implements ICMD {
             middlewares?: RequestHandler[]
         }>
     ) {
-        const controller = myContainer.get<ControllerMethods>(controllerType)
+        const controller = rentContainer.get<ControllerMethods>(controllerType)
 
         routes.forEach((route) => {
             const method: (
@@ -52,7 +52,7 @@ export class APIServer implements ICMD {
         this.app.use(express.json())
 
         // Middleware setup
-        const authMiddleware = myContainer.get<AuthMiddleware>(
+        const authMiddleware = rentContainer.get<AuthMiddleware>(
             TYPES.AuthMiddleware
         )
         this.app.use(authMiddleware.middleware.bind(authMiddleware))

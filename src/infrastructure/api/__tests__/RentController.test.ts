@@ -21,6 +21,7 @@ describe('RentController', () => {
         mockRentService = {
             renting: jest.fn(),
             paginate: jest.fn(),
+            processRentCreated: jest.fn(),
         }
 
         mockRentBudgetService = {

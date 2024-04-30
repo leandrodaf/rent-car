@@ -16,6 +16,7 @@ describe('MotorcycleController', () => {
             paginate: jest.fn(),
             updateBy: jest.fn(),
             delete: jest.fn(),
+            getAvailability: jest.fn(),
         }
 
         motorcycleData = {

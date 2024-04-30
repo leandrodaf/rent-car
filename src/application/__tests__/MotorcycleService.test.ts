@@ -5,11 +5,12 @@ import { FilterQuery } from '../../infrastructure/api/requesters/queries/Paginat
 import { CustomError } from '../../utils/handdlers/CustomError'
 import { StatusCodes } from 'http-status-codes'
 
-const motorcycleRespository: IMotorcycleRepository = {
+const motorcycleRepository: IMotorcycleRepository = {
     create: jest.fn(),
     filter: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    firstAvailable: jest.fn(),
 }
 
 describe('MotorcycleService', () => {
@@ -28,7 +29,7 @@ describe('MotorcycleService', () => {
 
     beforeEach(() => {
         jest.clearAllMocks()
-        service = new MotorcycleService(motorcycleRespository)
+        service = new MotorcycleService(motorcycleRepository)
     })
 
     describe('create', () => {
@@ -38,13 +39,13 @@ describe('MotorcycleService', () => {
                 _id: '1',
             } as IMotorcycleModel
 
-            motorcycleRespository.create = jest
+            motorcycleRepository.create = jest
                 .fn()
                 .mockResolvedValue(expectedMotorcycleModel)
 
             const result = await service.create(testMotorcycle)
 
-            expect(motorcycleRespository.create).toHaveBeenCalledWith(
+            expect(motorcycleRepository.create).toHaveBeenCalledWith(
                 testMotorcycle
             )
 
@@ -56,7 +57,7 @@ describe('MotorcycleService', () => {
         it('must call the repository and return an empty list', async () => {
             const mockResponse: IMotorcycleModel[] = []
 
-            motorcycleRespository.filter = jest
+            motorcycleRepository.filter = jest
                 .fn()
                 .mockResolvedValue(mockResponse)
 
@@ -70,7 +71,7 @@ describe('MotorcycleService', () => {
 
             const result = await service.paginate(search)
 
-            expect(motorcycleRespository.filter).toHaveBeenCalledWith(
+            expect(motorcycleRepository.filter).toHaveBeenCalledWith(
                 search.filters,
                 search.paginate
             )
@@ -87,7 +88,7 @@ describe('MotorcycleService', () => {
                 } as IMotorcycleModel,
             ]
 
-            motorcycleRespository.filter = jest
+            motorcycleRepository.filter = jest
                 .fn()
                 .mockResolvedValue(mockResponse)
 
@@ -101,7 +102,7 @@ describe('MotorcycleService', () => {
 
             const result = await service.paginate(search)
 
-            expect(motorcycleRespository.filter).toHaveBeenCalledWith(
+            expect(motorcycleRepository.filter).toHaveBeenCalledWith(
                 search.filters,
                 search.paginate
             )
@@ -115,13 +116,13 @@ describe('MotorcycleService', () => {
             const searchCriteria = { plate: 'example-plate' }
             const newData = { year: 2025 }
 
-            motorcycleRespository.update = jest
+            motorcycleRepository.update = jest
                 .fn()
                 .mockResolvedValue(updatedMotorcycle)
 
             const result = await service.updateBy(searchCriteria, newData)
 
-            expect(motorcycleRespository.update).toHaveBeenCalledWith(
+            expect(motorcycleRepository.update).toHaveBeenCalledWith(
                 searchCriteria,
                 newData
             )
@@ -132,7 +133,7 @@ describe('MotorcycleService', () => {
             const searchCriteria = { plate: 'non-existent-plate' }
             const newData = { year: 2025 }
 
-            motorcycleRespository.update = jest.fn().mockResolvedValue(null)
+            motorcycleRepository.update = jest.fn().mockResolvedValue(null)
 
             await expect(
                 service.updateBy(searchCriteria, newData)
@@ -149,25 +150,60 @@ describe('MotorcycleService', () => {
                 _id: '1',
             } as IMotorcycleModel
 
-            motorcycleRespository.delete = jest
+            motorcycleRepository.delete = jest
                 .fn()
                 .mockResolvedValue(expectedMotorcycleModel)
 
             const result = await service.delete({ plate: 'example-plate' })
 
-            expect(motorcycleRespository.delete).toHaveBeenCalledWith({
+            expect(motorcycleRepository.delete).toHaveBeenCalledWith({
                 plate: 'example-plate',
             })
             expect(result).toEqual(expectedMotorcycleModel)
         })
 
         it('should throw a CustomError with status 404 when no motorcycle is found', async () => {
-            motorcycleRespository.delete = jest.fn().mockResolvedValue(null)
+            motorcycleRepository.delete = jest.fn().mockResolvedValue(null)
 
             await expect(
                 service.delete({ plate: 'non-existent-plate' })
             ).rejects.toThrow(
                 new CustomError('Motorcycle not found', StatusCodes.NOT_FOUND)
+            )
+        })
+    })
+
+    describe('getAvailability', () => {
+        it('should return the first available motorcycle when one is available', async () => {
+            const availableMotorcycles = [
+                {
+                    _id: 'motorcycle1',
+                    plate: 'XYZ-7890',
+                    year: 2021,
+                    modelName: 'Model Y',
+                } as IMotorcycleModel,
+            ]
+
+            motorcycleRepository.firstAvailable = jest
+                .fn()
+                .mockResolvedValue(availableMotorcycles)
+
+            const result = await service.getAvailability()
+
+            expect(motorcycleRepository.firstAvailable).toHaveBeenCalled()
+            expect(result).toEqual(availableMotorcycles[0])
+        })
+
+        it('should throw a CustomError with status 404 when no motorcycles are available', async () => {
+            motorcycleRepository.firstAvailable = jest
+                .fn()
+                .mockResolvedValue([])
+
+            await expect(service.getAvailability()).rejects.toThrow(
+                new CustomError(
+                    'No motorcycles available in stock',
+                    StatusCodes.NOT_FOUND
+                )
             )
         })
     })

@@ -116,4 +116,38 @@ describe('MotorcycleRepository', () => {
             expect(result).toBeNull()
         })
     })
+
+    describe('firstAvailable', () => {
+        it('should return the first available motorcycle when one is available', async () => {
+            const mockMotorcycle = [
+                {
+                    _id: 'motorcycle1',
+                    plate: 'ABC-1234',
+                    year: 2021,
+                    modelName: 'Model X',
+                    currentRentals: [],
+                },
+            ]
+
+            Motorcycle.aggregate = jest.fn().mockReturnValue({
+                exec: jest.fn().mockResolvedValue(mockMotorcycle),
+            })
+
+            const result = await motorcycleRepository.firstAvailable()
+
+            expect(Motorcycle.aggregate).toHaveBeenCalled()
+            expect(result).toEqual(mockMotorcycle)
+        })
+
+        it('should return null or an empty array when no motorcycles are available', async () => {
+            Motorcycle.aggregate = jest.fn().mockReturnValue({
+                exec: jest.fn().mockResolvedValue([]),
+            })
+
+            const result = await motorcycleRepository.firstAvailable()
+
+            expect(Motorcycle.aggregate).toHaveBeenCalled()
+            expect(result).toEqual([])
+        })
+    })
 })

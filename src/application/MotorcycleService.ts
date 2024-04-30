@@ -11,11 +11,11 @@ import { TYPES } from '../config/types'
 export class MotorcycleService implements IMotorcycleService {
     constructor(
         @inject(TYPES.MotorcycleRespository)
-        private readonly motorcycleRespository: IMotorcycleRepository
+        private readonly motorcycleRepository: IMotorcycleRepository
     ) {}
 
     async delete(search: Partial<IMotorcycle>): Promise<IMotorcycleModel> {
-        const motorcycle = await this.motorcycleRespository.delete(search)
+        const motorcycle = await this.motorcycleRepository.delete(search)
 
         if (!motorcycle) {
             throw new CustomError('Motorcycle not found', StatusCodes.NOT_FOUND)
@@ -28,7 +28,7 @@ export class MotorcycleService implements IMotorcycleService {
         search: Partial<IMotorcycle>,
         data: Partial<IMotorcycle>
     ): Promise<IMotorcycleModel> {
-        const motorcycle = await this.motorcycleRespository.update(search, data)
+        const motorcycle = await this.motorcycleRepository.update(search, data)
 
         if (!motorcycle) {
             throw new CustomError('Motorcycle not found', StatusCodes.NOT_FOUND)
@@ -38,7 +38,7 @@ export class MotorcycleService implements IMotorcycleService {
     }
 
     create(data: IMotorcycle): Promise<IMotorcycleModel> {
-        return this.motorcycleRespository.create(data)
+        return this.motorcycleRepository.create(data)
     }
 
     async paginate(
@@ -46,11 +46,24 @@ export class MotorcycleService implements IMotorcycleService {
     ): Promise<IMotorcycleModel[]> {
         const { filters, paginate } = search
 
-        const motorcycles = await this.motorcycleRespository.filter(
+        const motorcycles = await this.motorcycleRepository.filter(
             filters,
             paginate
         )
 
         return motorcycles.length ? motorcycles : []
+    }
+
+    public async getAvailability(): Promise<IMotorcycleModel> {
+        const motorcycles = await this.motorcycleRepository.firstAvailable()
+
+        if (!motorcycles || motorcycles.length === 0) {
+            throw new CustomError(
+                'No motorcycles available in stock',
+                StatusCodes.NOT_FOUND
+            )
+        }
+
+        return motorcycles[0]
     }
 }

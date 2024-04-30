@@ -15,4 +15,6 @@ export interface IMotorcycleRepository {
     ): Promise<IMotorcycleModel | null>
 
     delete(search: Partial<IMotorcycle>): Promise<IMotorcycleModel | null>
+
+    firstAvailable(): Promise<IMotorcycleModel[] | null>
 }

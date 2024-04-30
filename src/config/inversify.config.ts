@@ -71,4 +71,4 @@ rentContainer.bind<KafkaAdapter>(TYPES.Message).to(KafkaAdapter)
 
 rentContainer.bind<AuthMiddleware>(TYPES.AuthMiddleware).to(AuthMiddleware)
 
-export { rentContainer as myContainer }
+export { rentContainer }
