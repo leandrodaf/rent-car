@@ -16,6 +16,8 @@ import {
 } from './requesters/UpdateMotorcycleRequest'
 import { inject, injectable } from 'inversify'
 import { TYPES } from '../../config/types'
+import { CustomError } from '../../utils/handdlers/CustomError'
+import { StatusCodes } from 'http-status-codes'
 
 @injectable()
 export class MotorcycleController {

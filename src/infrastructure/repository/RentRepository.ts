@@ -14,10 +14,11 @@ export class RentRepository implements IRentRepository {
     }
 
     filter(
+        delivererId: string,
         filters: Partial<IRent> | null,
         paginate?: { page: number; perPage: number } | undefined
     ): Promise<IRentModel[]> {
-        let query = Rent.find(filters || {})
+        let query = Rent.find({ ...filters, deliverer: delivererId } || {})
 
         query = buildPaginate<IRent>(paginate, query)
 
@@ -37,5 +38,20 @@ export class RentRepository implements IRentRepository {
                 match: { plate },
             })
             .exec()
+    }
+
+    findRentsByMotorcyclePlate(plate: string): Promise<IRentModel[]> {
+        return Rent.find()
+            .populate({
+                path: 'motorcycle',
+                match: { plate: plate },
+                select: 'plate',
+            })
+            .exec()
+            .then((rents) =>
+                rents.filter(
+                    (rent) => rent.motorcycle && rent.motorcycle.plate === plate
+                )
+            )
     }
 }

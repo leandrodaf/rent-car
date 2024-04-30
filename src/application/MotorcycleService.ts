@@ -6,17 +6,34 @@ import { IMotorcycleService } from './interfaces/IMotorcycleService'
 import { CustomError } from '../utils/handdlers/CustomError'
 import { inject, injectable } from 'inversify'
 import { TYPES } from '../config/types'
+import { IRentRepository } from './interfaces/IRentRepository'
 
 @injectable()
 export class MotorcycleService implements IMotorcycleService {
     constructor(
         @inject(TYPES.MotorcycleRespository)
-        private readonly motorcycleRepository: IMotorcycleRepository
+        private readonly motorcycleRepository: IMotorcycleRepository,
+
+        @inject(TYPES.RentRepository)
+        private readonly rentRepository: IRentRepository
     ) {}
 
     async delete(search: Partial<IMotorcycle>): Promise<IMotorcycleModel> {
-        const motorcycle = await this.motorcycleRepository.delete(search)
+        if (!search.plate) {
+            throw new CustomError('Motorcycle not found', StatusCodes.NOT_FOUND)
+        }
 
+        const activeRents =
+            await this.rentRepository.findRentsByMotorcyclePlate(search.plate)
+
+        if (activeRents.length > 0) {
+            throw new CustomError(
+                'Cannot delete motorcycle with rents',
+                StatusCodes.BAD_REQUEST
+            )
+        }
+
+        const motorcycle = await this.motorcycleRepository.delete(search)
         if (!motorcycle) {
             throw new CustomError('Motorcycle not found', StatusCodes.NOT_FOUND)
         }

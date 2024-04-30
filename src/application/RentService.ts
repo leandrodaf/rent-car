@@ -31,10 +31,17 @@ export class RentService implements IRentService {
         private readonly message: IMessage
     ) {}
 
-    async paginate(search: FilterQuery<Partial<IRent>>): Promise<IRentModel[]> {
+    async paginate(
+        delivererId: string,
+        search: FilterQuery<Partial<IRent>>
+    ): Promise<IRentModel[]> {
         const { filters, paginate } = search
 
-        const rents = await this.rentRepository.filter(filters, paginate)
+        const rents = await this.rentRepository.filter(
+            delivererId,
+            filters,
+            paginate
+        )
 
         return rents.length ? rents : []
     }

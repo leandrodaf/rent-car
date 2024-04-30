@@ -51,7 +51,11 @@ export class RentController {
     async paginate(req: Request, response: Response, next: NextFunction) {
         const query = await getQueries(req, RentQuery)
 
-        const result = await this.rentService.paginate(query)
+        if (!req.auth._id) {
+            throw new CustomError('Unidentified user', StatusCodes.FORBIDDEN)
+        }
+
+        const result = await this.rentService.paginate(req.auth._id, query)
 
         response.status(200).json({
             data: result.map((item) => new RentResource(item)),

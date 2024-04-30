@@ -20,6 +20,7 @@ describe('RentBudgetService', () => {
             filter: jest.fn(),
             findRentedByPlate: jest.fn(),
             update: jest.fn(),
+            findRentsByMotorcyclePlate: jest.fn(),
         }
         mockSimplePaymentCalculationStrategy = {
             calculateCost: jest.fn(),

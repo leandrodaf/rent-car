@@ -4,7 +4,10 @@ import { FilterQuery } from '../../infrastructure/api/requesters/queries/Paginat
 export interface IRentService {
     renting(id: string, endDate: Date): Promise<IRentModel>
 
-    paginate(search: FilterQuery<Partial<IRent>>): Promise<IRentModel[]>
+    paginate(
+        delivererId: string,
+        search: FilterQuery<Partial<IRent>>
+    ): Promise<IRentModel[]>
 
     processRentCreated(message: string): Promise<IRentModel | null>
 }

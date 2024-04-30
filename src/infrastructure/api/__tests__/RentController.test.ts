@@ -93,7 +93,7 @@ describe('RentController', () => {
 
             await controller.paginate(req, res, next)
 
-            expect(mockRentService.paginate).toHaveBeenCalledWith({
+            expect(mockRentService.paginate).toHaveBeenCalledWith('user-id', {
                 filters: {},
                 paginate: { page: 1, perPage: 10 },
             })

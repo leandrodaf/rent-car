@@ -27,6 +27,7 @@ const mockRentRepository: jest.Mocked<IRentRepository> = {
     filter: jest.fn(),
     findRentedByPlate: jest.fn(),
     update: jest.fn(),
+    findRentsByMotorcyclePlate: jest.fn(),
 }
 
 const mockMotorcycleService: jest.Mocked<IMotorcycleService> = {
@@ -191,12 +192,14 @@ describe('RentService', () => {
                 filters: { delivererId: '456' },
                 paginate: { page: 1, perPage: 10 },
             } as FilterQuery<Partial<IRent>>
+            const delivererId = '1234'
 
             mockRentRepository.filter.mockResolvedValue(mockRents)
 
-            const result = await service.paginate(search)
+            const result = await service.paginate(delivererId, search)
 
             expect(mockRentRepository.filter).toHaveBeenCalledWith(
+                delivererId,
                 search.filters,
                 search.paginate
             )
@@ -208,12 +211,14 @@ describe('RentService', () => {
                 filters: { status: 'foo-status' },
                 paginate: { page: 1, perPage: 10 },
             } as unknown as FilterQuery<Partial<IRent>>
+            const delivererId = '1234'
 
             mockRentRepository.filter.mockResolvedValue([])
 
-            const result = await service.paginate(search)
+            const result = await service.paginate(delivererId, search)
 
             expect(mockRentRepository.filter).toHaveBeenCalledWith(
+                delivererId,
                 search.filters,
                 search.paginate
             )
@@ -225,12 +230,14 @@ describe('RentService', () => {
                 filters: { delivererId: '456' },
                 paginate: { page: 1, perPage: 10 },
             } as FilterQuery<Partial<IRent>>
-
+            const delivererId = '1234'
             const error = new Error('Database error')
 
             mockRentRepository.filter.mockRejectedValue(error)
 
-            await expect(service.paginate(search)).rejects.toThrow(error)
+            await expect(service.paginate(delivererId, search)).rejects.toThrow(
+                error
+            )
         })
     })
 

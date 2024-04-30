@@ -1,5 +1,6 @@
-import { IMotorcycle } from '../../../domain/Motorcycle'
+import { IMotorcycle, IMotorcycleModel } from '../../../domain/Motorcycle'
 import { IRent, IRentModel, RentStatus } from '../../../domain/Rent'
+import { MotorcycleResource } from './MotorcycleResource'
 
 export class RentResource implements Partial<IRent> {
     motorcycle: IMotorcycle | undefined
@@ -10,13 +11,17 @@ export class RentResource implements Partial<IRent> {
     totalCost: number
     status: RentStatus
 
-    constructor(motorcycle: IRentModel) {
-        this.motorcycle = motorcycle.motorcycle
-        this.plan = motorcycle.plan
-        this.startDate = motorcycle.startDate
-        this.endDate = motorcycle.endDate
-        this.deliveryForecastDate = motorcycle.deliveryForecastDate
-        this.totalCost = motorcycle.totalCost
-        this.status = motorcycle.status
+    constructor(rent: IRentModel) {
+        if (rent.motorcycle) {
+            this.motorcycle = new MotorcycleResource(
+                rent.motorcycle as IMotorcycleModel
+            )
+        }
+        this.plan = rent.plan
+        this.startDate = rent.startDate
+        this.endDate = rent.endDate
+        this.deliveryForecastDate = rent.deliveryForecastDate
+        this.totalCost = rent.totalCost
+        this.status = rent.status
     }
 }

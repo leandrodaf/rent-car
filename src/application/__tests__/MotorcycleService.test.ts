@@ -4,6 +4,7 @@ import { IMotorcycle, IMotorcycleModel } from '../../domain/Motorcycle'
 import { FilterQuery } from '../../infrastructure/api/requesters/queries/PaginateQuery'
 import { CustomError } from '../../utils/handdlers/CustomError'
 import { StatusCodes } from 'http-status-codes'
+import { IRentRepository } from '../interfaces/IRentRepository'
 
 const motorcycleRepository: IMotorcycleRepository = {
     create: jest.fn(),
@@ -11,6 +12,14 @@ const motorcycleRepository: IMotorcycleRepository = {
     update: jest.fn(),
     delete: jest.fn(),
     firstAvailable: jest.fn(),
+}
+
+const rentRepositoryRepository: IRentRepository = {
+    create: jest.fn(),
+    filter: jest.fn(),
+    findRentedByPlate: jest.fn(),
+    update: jest.fn(),
+    findRentsByMotorcyclePlate: jest.fn(),
 }
 
 describe('MotorcycleService', () => {
@@ -29,7 +38,10 @@ describe('MotorcycleService', () => {
 
     beforeEach(() => {
         jest.clearAllMocks()
-        service = new MotorcycleService(motorcycleRepository)
+        service = new MotorcycleService(
+            motorcycleRepository,
+            rentRepositoryRepository
+        )
     })
 
     describe('create', () => {
@@ -144,31 +156,69 @@ describe('MotorcycleService', () => {
     })
 
     describe('delete', () => {
-        it('should delete the motorcycle and return the deleted motorcycle model when motorcycle is found', async () => {
+        it('should not delete the motorcycle if there are active rents associated', async () => {
+            const searchCriteria = { plate: 'example-plate' }
+            const activeRents = [{ _id: 'rent1', status: 'RENTED' }]
+
+            rentRepositoryRepository.findRentsByMotorcyclePlate = jest
+                .fn()
+                .mockResolvedValue(activeRents)
+
+            await expect(service.delete(searchCriteria)).rejects.toThrow(
+                new CustomError(
+                    'Cannot delete motorcycle with rents',
+                    StatusCodes.BAD_REQUEST
+                )
+            )
+
+            expect(
+                rentRepositoryRepository.findRentsByMotorcyclePlate
+            ).toHaveBeenCalledWith('example-plate')
+            expect(motorcycleRepository.delete).not.toHaveBeenCalled()
+        })
+
+        it('should delete the motorcycle and return the deleted model when no active rents are found', async () => {
+            const searchCriteria = { plate: 'example-plate' }
             const expectedMotorcycleModel = {
                 ...testMotorcycle,
                 _id: '1',
             } as IMotorcycleModel
 
+            rentRepositoryRepository.findRentsByMotorcyclePlate = jest
+                .fn()
+                .mockResolvedValue([])
             motorcycleRepository.delete = jest
                 .fn()
                 .mockResolvedValue(expectedMotorcycleModel)
 
-            const result = await service.delete({ plate: 'example-plate' })
+            const result = await service.delete(searchCriteria)
 
-            expect(motorcycleRepository.delete).toHaveBeenCalledWith({
-                plate: 'example-plate',
-            })
+            expect(
+                rentRepositoryRepository.findRentsByMotorcyclePlate
+            ).toHaveBeenCalledWith('example-plate')
+            expect(motorcycleRepository.delete).toHaveBeenCalledWith(
+                searchCriteria
+            )
             expect(result).toEqual(expectedMotorcycleModel)
         })
 
-        it('should throw a CustomError with status 404 when no motorcycle is found', async () => {
+        it('should throw a CustomError with status 404 when the motorcycle is not found', async () => {
+            const searchCriteria = { plate: 'non-existent-plate' }
+
+            rentRepositoryRepository.findRentsByMotorcyclePlate = jest
+                .fn()
+                .mockResolvedValue([])
             motorcycleRepository.delete = jest.fn().mockResolvedValue(null)
 
-            await expect(
-                service.delete({ plate: 'non-existent-plate' })
-            ).rejects.toThrow(
+            await expect(service.delete(searchCriteria)).rejects.toThrow(
                 new CustomError('Motorcycle not found', StatusCodes.NOT_FOUND)
+            )
+
+            expect(
+                rentRepositoryRepository.findRentsByMotorcyclePlate
+            ).toHaveBeenCalledWith('non-existent-plate')
+            expect(motorcycleRepository.delete).toHaveBeenCalledWith(
+                searchCriteria
             )
         })
     })

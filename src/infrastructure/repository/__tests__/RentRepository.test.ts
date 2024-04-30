@@ -54,6 +54,7 @@ describe('RentRepository', () => {
         it('must filter using mongoose APIs with pagination', async () => {
             const filters = { delivererId: '123' } as Partial<IRent>
             const paginate = { page: 1, perPage: 10 }
+            const delivererId = '123'
 
             const execMock = jest.fn().mockResolvedValue([])
 
@@ -61,19 +62,23 @@ describe('RentRepository', () => {
                 exec: execMock,
             }))
 
-            await rentRepository.filter(filters, paginate)
+            await rentRepository.filter(delivererId, filters, paginate)
 
             expect(buildPaginate).toHaveBeenCalledWith(
                 paginate,
                 expect.anything()
             )
-            expect(Rent.find).toHaveBeenCalledWith(filters)
+            expect(Rent.find).toHaveBeenCalledWith({
+                ...filters,
+                deliverer: delivererId,
+            })
             expect(execMock).toHaveBeenCalled()
         })
 
         it('should handle empty filters correctly', async () => {
             const filters = null
             const paginate = { page: 2, perPage: 5 }
+            const delivererId = '123'
 
             const execMock = jest.fn().mockResolvedValue([])
 
@@ -81,13 +86,15 @@ describe('RentRepository', () => {
                 exec: execMock,
             }))
 
-            await rentRepository.filter(filters, paginate)
+            await rentRepository.filter(delivererId, filters, paginate)
 
             expect(buildPaginate).toHaveBeenCalledWith(
                 paginate,
                 expect.anything()
             )
-            expect(Rent.find).toHaveBeenCalledWith({})
+            expect(Rent.find).toHaveBeenCalledWith({
+                deliverer: delivererId,
+            })
             expect(execMock).toHaveBeenCalled()
         })
     })
@@ -169,6 +176,49 @@ describe('RentRepository', () => {
 
             expect(Rent.findByIdAndUpdate).toHaveBeenCalledWith(id, updateData)
             expect(result).toBeNull()
+        })
+    })
+
+    describe('findRentsByMotorcyclePlate', () => {
+        it('should return rents that match the given motorcycle plate', async () => {
+            const plate = 'ABC123'
+            const mockRents = [
+                {
+                    _id: '123',
+                    motorcycle: {
+                        _id: 'm123',
+                        plate: 'ABC123',
+                    },
+                    status: RentStatus.RENTED,
+                },
+            ]
+
+            Rent.find = jest.fn().mockReturnValue({
+                populate: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(mockRents),
+                }),
+            })
+
+            const result =
+                await rentRepository.findRentsByMotorcyclePlate(plate)
+
+            expect(Rent.find).toHaveBeenCalled()
+            expect(result).toEqual(mockRents)
+        })
+
+        it('should return an empty array when no rents match the given motorcycle plate', async () => {
+            const plate = 'XYZ789'
+            Rent.find = jest.fn().mockReturnValue({
+                populate: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue([]),
+                }),
+            })
+
+            const result =
+                await rentRepository.findRentsByMotorcyclePlate(plate)
+
+            expect(Rent.find).toHaveBeenCalled()
+            expect(result).toEqual([])
         })
     })
 })
