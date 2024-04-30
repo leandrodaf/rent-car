@@ -24,6 +24,7 @@ const mockRentRepository: jest.Mocked<IRentRepository> = {
     create: jest.fn(),
     filter: jest.fn(),
     findRentedByPlate: jest.fn(),
+    update: jest.fn(),
 }
 
 describe('RentService', () => {

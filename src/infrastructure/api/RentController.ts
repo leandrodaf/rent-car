@@ -75,4 +75,24 @@ export class RentController {
             data: new ExpectedPriceResource(data, result.deliveryDate),
         })
     }
+
+    @Authorize([UserType.DELIVERER])
+    @ErrorHandler()
+    async finalizeRent(req: Request, response: Response, next: NextFunction) {
+        const result: DeliveryRequestType = await DeliverySchema.parseAsync(
+            req.body
+        )
+
+        if (!req.auth._id) {
+            throw new CustomError('Unidentified user', StatusCodes.FORBIDDEN)
+        }
+
+        await this.rentBudgetService.finalizeRent(
+            req.auth._id,
+            result.plate,
+            result.deliveryDate
+        )
+
+        response.status(200).send()
+    }
 }

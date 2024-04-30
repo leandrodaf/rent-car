@@ -7,6 +7,7 @@ import { CustomError } from '../utils/handdlers/CustomError'
 import { StatusCodes } from 'http-status-codes'
 import { ISimplePaymentCalculationStrategy } from './interfaces/SimplePaymentCalculationStrategy'
 import { IRentRepository } from './interfaces/IRentRepository'
+import { IRentModel, RentStatus } from '../domain/Rent'
 
 export class RentBudgetService implements IRentBudgetService {
     constructor(
@@ -34,5 +35,40 @@ export class RentBudgetService implements IRentBudgetService {
             this.simplePaymentCalculationStrategy.calculateCost(rent, date)
 
         return { totalCost, rent, totalDaysUsed }
+    }
+
+    async finalizeRent(
+        delivererId: string,
+        plate: string,
+        deliveryDate: Date
+    ): Promise<IRentModel> {
+        const rent = await this.rentRepository.findRentedByPlate(
+            delivererId,
+            plate
+        )
+
+        if (!rent) {
+            throw new CustomError('Rent not found', StatusCodes.NOT_FOUND)
+        }
+
+        const date = DateTime.fromJSDate(deliveryDate)
+
+        const { totalCost } =
+            this.simplePaymentCalculationStrategy.calculateCost(rent, date)
+
+        const updatedRent = await this.rentRepository.update(
+            rent._id as string,
+            {
+                deliveryForecastDate: deliveryDate,
+                totalCost,
+                status: RentStatus.DONE,
+            }
+        )
+
+        if (!updatedRent) {
+            throw new CustomError('Rent not found', StatusCodes.NOT_FOUND)
+        }
+
+        return updatedRent
     }
 }

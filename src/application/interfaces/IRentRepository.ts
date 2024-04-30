@@ -13,4 +13,6 @@ export interface IRentRepository {
         delivererId: string,
         plate: String
     ): Promise<IRentModel | null>
+
+    update(id: string, data: Partial<IRent>): Promise<IRentModel | null>
 }

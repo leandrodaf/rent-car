@@ -120,6 +120,11 @@ export class APIServer implements ICMD {
             '/rents/expected-return',
             rentController.expectedReturn.bind(rentController)
         )
+
+        this.app.post(
+            '/rents/finalize-return',
+            rentController.finalizeRent.bind(rentController)
+        )
     }
 
     private setupErrorHandling(): void {

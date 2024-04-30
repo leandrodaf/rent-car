@@ -72,7 +72,7 @@ describe('RentRepository', () => {
         })
 
         it('should handle empty filters correctly', async () => {
-            const filters = null // Test empty filters
+            const filters = null
             const paginate = { page: 2, perPage: 5 }
 
             const execMock = jest.fn().mockResolvedValue([])
@@ -137,6 +137,37 @@ describe('RentRepository', () => {
                 deliverer: 'deliverer999',
                 status: RentStatus.RENTED,
             })
+            expect(result).toBeNull()
+        })
+    })
+
+    describe('update', () => {
+        it('should successfully update a rent record and return the updated model', async () => {
+            const id = '789'
+            const updateData = { status: RentStatus.DONE }
+
+            const updatedRent = {
+                _id: id,
+                status: RentStatus.DONE,
+            } as IRentModel
+
+            Rent.findByIdAndUpdate = jest.fn().mockResolvedValue(updatedRent)
+
+            const result = await rentRepository.update(id, updateData)
+
+            expect(Rent.findByIdAndUpdate).toHaveBeenCalledWith(id, updateData)
+            expect(result).toEqual(updatedRent)
+        })
+
+        it('should return null if the rent record does not exist', async () => {
+            const id = '790'
+            const updateData = { status: RentStatus.DONE }
+
+            Rent.findByIdAndUpdate = jest.fn().mockResolvedValue(null)
+
+            const result = await rentRepository.update(id, updateData)
+
+            expect(Rent.findByIdAndUpdate).toHaveBeenCalledWith(id, updateData)
             expect(result).toBeNull()
         })
     })

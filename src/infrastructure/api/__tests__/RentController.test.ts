@@ -25,9 +25,8 @@ describe('RentController', () => {
 
         mockRentBudgetService = {
             expectedReturn: jest.fn(),
+            finalizeRent: jest.fn(),
         }
-
-        // Exemplo de total de dias utilizados
 
         controller = new RentController(mockRentService, mockRentBudgetService)
     })
@@ -147,7 +146,6 @@ describe('RentController', () => {
                 auth: { _id: 'user-id', userType: UserType.DELIVERER },
             })
 
-            // Mockando a chamada ao método expectedReturn do serviço rentBudgetService
             mockRentBudgetService.expectedReturn.mockResolvedValue(
                 expectedPriceData
             )
@@ -157,7 +155,7 @@ describe('RentController', () => {
             expect(mockRentBudgetService.expectedReturn).toHaveBeenCalledWith(
                 'user-id',
                 'XYZ1A21',
-                new Date('2024-05-01T03:00:00.000Z') // Convertendo a data de entrega para o formato de data JavaScript
+                new Date('2024-05-01T03:00:00.000Z')
             )
             expect(res.status).toHaveBeenCalledWith(200)
             expect(res.json).toHaveBeenCalledWith({
@@ -202,6 +200,72 @@ describe('RentController', () => {
             await controller.expectedReturn(req, res, next)
 
             expect(next).toHaveBeenCalledWith(expect.any(ZodError))
+        })
+    })
+
+    describe('finalizeRent', () => {
+        it('should successfully finalize the rent and respond correctly', async () => {
+            const body = {
+                plate: 'XYZ1A21',
+                deliveryDate: '2024-05-01',
+            }
+
+            const { req, res, next } = createMockReqRes({
+                body,
+                auth: { _id: 'user-id', userType: UserType.DELIVERER },
+            })
+
+            mockRentBudgetService.finalizeRent.mockResolvedValue(
+                {} as IRentModel
+            )
+
+            await controller.finalizeRent(req, res, next)
+
+            expect(mockRentBudgetService.finalizeRent).toHaveBeenCalledWith(
+                'user-id',
+                'XYZ1A21',
+                new Date('2024-05-01T03:00:00.000Z')
+            )
+            expect(res.status).toHaveBeenCalledWith(200)
+            expect(res.send).toHaveBeenCalled()
+        })
+
+        it('should handle errors if request validation fails', async () => {
+            const { req, res, next } = createMockReqRes({
+                body: {
+                    plate: 'XYZ1A21',
+                    deliveryDate: 'invalid-date',
+                },
+                auth: { _id: 'user-id', userType: UserType.DELIVERER },
+            })
+
+            await controller.finalizeRent(req, res, next)
+
+            expect(next).toHaveBeenCalledWith(expect.any(Error))
+        })
+
+        it('should handle errors if rent finalization fails', async () => {
+            const body = {
+                plate: 'XYZ1A21',
+                deliveryDate: '2024-05-01',
+            }
+
+            const { req, res, next } = createMockReqRes({
+                body,
+                auth: { _id: 'user-id', userType: UserType.DELIVERER },
+            })
+
+            const error = new Error('Finalization failure')
+            mockRentBudgetService.finalizeRent.mockRejectedValue(error)
+
+            await controller.finalizeRent(req, res, next)
+
+            expect(mockRentBudgetService.finalizeRent).toHaveBeenCalledWith(
+                'user-id',
+                'XYZ1A21',
+                new Date('2024-05-01T03:00:00.000Z')
+            )
+            expect(next).toHaveBeenCalledWith(error)
         })
     })
 })

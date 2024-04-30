@@ -12,4 +12,10 @@ export interface IRentBudgetService {
         plate: string,
         deliveryDate: Date
     ): Promise<PriceCalculated>
+
+    finalizeRent(
+        delivererId: string,
+        plate: string,
+        deliveryDate: Date
+    ): Promise<IRentModel>
 }
