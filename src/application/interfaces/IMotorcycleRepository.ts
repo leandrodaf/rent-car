@@ -1,7 +1,7 @@
 import { IMotorcycle, IMotorcycleModel } from '../../domain/Motorcycle'
 import { PaginateQueryType } from './IRepositoryPaginate'
 
-export interface IMotorcycleRespository {
+export interface IMotorcycleRepository {
     create(data: IMotorcycle): Promise<IMotorcycleModel>
 
     filter(

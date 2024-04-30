@@ -1,4 +1,5 @@
-import { IMotorcycleRespository } from '../../application/interfaces/IMotorcycleRespository'
+import { injectable } from 'inversify'
+import { IMotorcycleRepository } from '../../application/interfaces/IMotorcycleRepository'
 import {
     IMotorcycle,
     IMotorcycleModel,
@@ -6,7 +7,8 @@ import {
 } from '../../domain/Motorcycle'
 import { buildPaginate } from './Paginate'
 
-export class MotorcycleRespository implements IMotorcycleRespository {
+@injectable()
+export class MotorcycleRepository implements IMotorcycleRepository {
     delete(search: Partial<IMotorcycle>): Promise<IMotorcycleModel | null> {
         return Motorcycle.findOneAndDelete(search)
     }

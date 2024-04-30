@@ -19,10 +19,15 @@ import {
 } from './requesters/ExpectedReturnRentingRequest'
 import { IRentBudgetService } from '../../application/interfaces/IRentBudgetService'
 import { ExpectedPriceResource } from './resources/ExpectedPriceResource'
+import { inject, injectable } from 'inversify'
+import { TYPES } from '../../config/types'
 
+@injectable()
 export class RentController {
     constructor(
+        @inject(TYPES.RentService)
         private readonly rentService: IRentService,
+        @inject(TYPES.RentBudgetService)
         private readonly rentBudgetService: IRentBudgetService
     ) {}
 

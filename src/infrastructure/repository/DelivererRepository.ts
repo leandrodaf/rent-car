@@ -1,7 +1,9 @@
+import { injectable } from 'inversify'
 import { IDelivererRepository } from '../../application/interfaces/IDelivererRepository'
 import { Deliverer, IDeliverer, IDelivererModel } from '../../domain/Deliverer'
 import { buildPaginate } from './Paginate'
 
+@injectable()
 export class DelivererRepository implements IDelivererRepository {
     findById(id: string): Promise<IDelivererModel | null> {
         return Deliverer.findById(id)

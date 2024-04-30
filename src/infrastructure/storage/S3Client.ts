@@ -7,7 +7,9 @@ import { Readable } from 'stream'
 import logger from '../../utils/logger'
 import config from '../../config'
 import { IStorage } from './IStorage'
+import { injectable } from 'inversify'
 
+@injectable()
 export class S3Client implements IStorage {
     private s3Client: InternalAWSS3
 

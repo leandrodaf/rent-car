@@ -1,7 +1,9 @@
+import { injectable } from 'inversify'
 import { IRentRepository } from '../../application/interfaces/IRentRepository'
 import { IRent, IRentModel, Rent, RentStatus } from '../../domain/Rent'
 import { buildPaginate } from './Paginate'
 
+@injectable()
 export class RentRepository implements IRentRepository {
     update(id: string, data: Partial<IRent>): Promise<IRentModel | null> {
         return Rent.findByIdAndUpdate(id, data)

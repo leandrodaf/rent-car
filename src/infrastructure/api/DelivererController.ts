@@ -12,9 +12,15 @@ import { CustomError } from '../../utils/handdlers/CustomError'
 import { StatusCodes } from 'http-status-codes'
 import { Authorize } from './decorators/Authorize'
 import { UserType } from '../../domain/User'
+import { inject, injectable } from 'inversify'
+import { TYPES } from '../../config/types'
 
+@injectable()
 export class DelivererController {
-    constructor(private readonly delivererService: IDelivererService) {}
+    constructor(
+        @inject(TYPES.DelivererService)
+        private readonly delivererService: IDelivererService
+    ) {}
 
     @ErrorHandler()
     public async register(

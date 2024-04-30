@@ -1,11 +1,11 @@
 import { MotorcycleService } from '../MotorcycleService'
-import { IMotorcycleRespository } from '../interfaces/IMotorcycleRespository'
+import { IMotorcycleRepository } from '../interfaces/IMotorcycleRepository'
 import { IMotorcycle, IMotorcycleModel } from '../../domain/Motorcycle'
 import { FilterQuery } from '../../infrastructure/api/requesters/queries/PaginateQuery'
 import { CustomError } from '../../utils/handdlers/CustomError'
 import { StatusCodes } from 'http-status-codes'
 
-const motorcycleRespository: IMotorcycleRespository = {
+const motorcycleRespository: IMotorcycleRepository = {
     create: jest.fn(),
     filter: jest.fn(),
     update: jest.fn(),

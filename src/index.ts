@@ -1,3 +1,5 @@
+import 'reflect-metadata'
+
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import prompts from 'prompts'

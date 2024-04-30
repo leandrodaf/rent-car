@@ -8,11 +8,15 @@ import { StatusCodes } from 'http-status-codes'
 import { CustomError } from '../utils/handdlers/CustomError'
 import { IStorage } from '../infrastructure/storage/IStorage'
 import config from '../config'
+import { inject, injectable } from 'inversify'
+import { TYPES } from '../config/types'
 
+@injectable()
 export class DelivererService implements IDelivererService {
     constructor(
+        @inject(TYPES.DelivererRepository)
         private readonly delivererRepository: IDelivererRepository,
-        private readonly storage: IStorage
+        @inject(TYPES.Storage) private readonly storage: IStorage
     ) {}
 
     async findById(id: string): Promise<IDelivererModel> {

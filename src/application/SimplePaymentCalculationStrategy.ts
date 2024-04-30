@@ -1,7 +1,9 @@
 import { DateTime } from 'luxon'
 import { IRent, IRentModel } from '../domain/Rent'
 import { ISimplePaymentCalculationStrategy } from './interfaces/SimplePaymentCalculationStrategy'
+import { injectable } from 'inversify'
 
+@injectable()
 export class SimplePaymentCalculationStrategy
     implements ISimplePaymentCalculationStrategy
 {

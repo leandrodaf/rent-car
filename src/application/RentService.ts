@@ -8,11 +8,17 @@ import { DateTime } from 'luxon'
 import { IRentPlanRepository } from './interfaces/IRentPlanRepository'
 import { IRentRepository } from './interfaces/IRentRepository'
 import { FilterQuery } from '../infrastructure/api/requesters/queries/PaginateQuery'
+import { inject, injectable } from 'inversify'
+import { TYPES } from '../config/types'
 
+@injectable()
 export class RentService implements IRentService {
     constructor(
+        @inject(TYPES.RentRepository)
         private readonly rentRepository: IRentRepository,
+        @inject(TYPES.DelivererService)
         private readonly delivererService: IDelivererService,
+        @inject(TYPES.RentPlanRepository)
         private readonly rentPlanRepository: IRentPlanRepository
     ) {}
 

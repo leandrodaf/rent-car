@@ -2,9 +2,15 @@ import { NextFunction, Request, Response } from 'express'
 import { IAuthService } from '../../application/interfaces/IAuthService'
 import { ErrorHandler } from './decorators/ErrorHandler'
 import { LoginRequest } from './requesters/LoginRequest'
+import { inject, injectable } from 'inversify'
+import { TYPES } from '../../config/types'
 
+@injectable()
 export class AuthController {
-    constructor(private readonly authService: IAuthService) {}
+    constructor(
+        @inject(TYPES.AuthService)
+        private readonly authService: IAuthService
+    ) {}
 
     @ErrorHandler()
     public async login(req: Request, response: Response, next: NextFunction) {

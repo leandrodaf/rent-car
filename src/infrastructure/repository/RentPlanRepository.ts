@@ -1,8 +1,10 @@
+import { injectable } from 'inversify'
 import {
     IRentPlanRepository,
     IRentalPlan,
 } from '../../application/interfaces/IRentPlanRepository'
 
+@injectable()
 export class RentPlanRepository implements IRentPlanRepository {
     private static rentalPlans: IRentalPlan[] = [
         { days: 7, dailyRate: 3000 },

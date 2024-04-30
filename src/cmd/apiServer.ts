@@ -1,26 +1,16 @@
-import express from 'express'
+import express, { Application, RequestHandler } from 'express'
 import { ICMD } from './ICMD'
-import { UserRepository } from '../infrastructure/repository/UserRepository'
-import { AuthService } from '../application/AuthService'
-import { AuthController } from '../infrastructure/api/AuthController'
+import { upload } from '../infrastructure/api/MulterUpload'
 import { MongoConnectionManager } from '../infrastructure/database/MongoConnectionManager'
 import { ErrorHandlingMiddleware } from '../infrastructure/api/middlewares/ErrorHandlingMiddleware'
-import { DelivererController } from '../infrastructure/api/DelivererController'
-import { DelivererRepository } from '../infrastructure/repository/DelivererRepository'
-import { DelivererService } from '../application/DelivererService'
-import { upload } from '../infrastructure/api/MulterUpload'
-import { AuthMiddleware } from '../infrastructure/api/middlewares/AuthMiddleware'
-import { S3Client } from '../infrastructure/storage/S3Client'
-import { MotorcycleController } from '../infrastructure/api/MotorcycleController'
-import { MotorcycleService } from '../application/MotorcycleService'
-import { MotorcycleRespository } from '../infrastructure/repository/MotorcycleRespository'
 import logger from '../utils/logger'
-import { RentController } from '../infrastructure/api/RentController'
-import { RentService } from '../application/RentService'
-import { RentPlanRepository } from '../infrastructure/repository/RentPlanRepository'
-import { RentRepository } from '../infrastructure/repository/RentRepository'
-import { RentBudgetService } from '../application/RentBudgetService'
-import { SimplePaymentCalculationStrategy } from '../application/SimplePaymentCalculationStrategy'
+import { myContainer } from '../config/inversify.config'
+import { TYPES } from '../config/types'
+import { AuthMiddleware } from '../infrastructure/api/middlewares/AuthMiddleware'
+
+type ControllerMethods = {
+    [action: string]: (...args: unknown[]) => unknown
+}
 
 export class APIServer implements ICMD {
     private app: express.Application
@@ -31,100 +21,85 @@ export class APIServer implements ICMD {
         this.setupErrorHandling()
     }
 
+    private bindRoutes(
+        controllerType: symbol,
+        routes: Array<{
+            method: 'get' | 'post' | 'patch' | 'delete'
+            path: string
+            action: string
+            middlewares?: RequestHandler[]
+        }>
+    ) {
+        const controller = myContainer.get<ControllerMethods>(controllerType)
+
+        routes.forEach((route) => {
+            const method: (
+                path: string,
+                ...handlers: RequestHandler[]
+            ) => Application = this.app[route.method]
+
+            const handlers = [
+                ...(route.middlewares || []),
+                controller[route.action].bind(controller),
+            ]
+
+            method.call(this.app, route.path, ...handlers)
+        })
+    }
+
     private setupRoutes(): void {
-        const storage = new S3Client()
-
-        const userRepository = new UserRepository()
-        const delivererRepository = new DelivererRepository()
-        const motorcycleRespository = new MotorcycleRespository()
-        const rentPlanRepository = new RentPlanRepository()
-        const rentRepository = new RentRepository()
-
-        const authService = new AuthService(userRepository)
-        const delivererService = new DelivererService(
-            delivererRepository,
-            storage
-        )
-
-        const motorcycleService = new MotorcycleService(motorcycleRespository)
-        const rentService = new RentService(
-            rentRepository,
-            delivererService,
-            rentPlanRepository
-        )
-        const simplePaymentCalculationStrategy =
-            new SimplePaymentCalculationStrategy()
-
-        const rentBudgetService = new RentBudgetService(
-            rentRepository,
-            simplePaymentCalculationStrategy
-        )
-
-        const authController = new AuthController(authService)
-        const delivererController = new DelivererController(delivererService)
-        const motorcycleController = new MotorcycleController(motorcycleService)
-
-        const rentController = new RentController(
-            rentService,
-            rentBudgetService
-        )
-
-        const authMiddleware = new AuthMiddleware(authService)
-
         this.app.use(express.json())
 
-        // Middlewares
+        // Middleware setup
+        const authMiddleware = myContainer.get<AuthMiddleware>(
+            TYPES.AuthMiddleware
+        )
         this.app.use(authMiddleware.middleware.bind(authMiddleware))
 
-        this.app.post('/auth/login', authController.login.bind(authController))
+        // Auth Routes
+        this.bindRoutes(TYPES.AuthController, [
+            { method: 'post', path: '/auth/login', action: 'login' },
+        ])
 
-        this.app.post(
-            '/deliverers',
-            delivererController.register.bind(delivererController)
-        )
+        // Deliverer Routes
+        this.bindRoutes(TYPES.DelivererController, [
+            { method: 'post', path: '/deliverers', action: 'register' },
+            { method: 'get', path: '/deliverers', action: 'paginate' },
+            {
+                method: 'post',
+                path: '/deliverers/attach',
+                action: 'attachLicenseImage',
+                middlewares: [upload.single('file')],
+            },
+        ])
 
-        this.app.get(
-            '/deliverers',
-            delivererController.paginate.bind(delivererController)
-        )
+        // Motorcycle Routes
+        this.bindRoutes(TYPES.MotorcycleController, [
+            { method: 'post', path: '/motorcycles', action: 'store' },
+            { method: 'get', path: '/motorcycles', action: 'paginate' },
+            {
+                method: 'patch',
+                path: '/motorcycles/:plate',
+                action: 'updatePlate',
+            },
+            { method: 'delete', path: '/motorcycles/:plate', action: 'delete' },
+        ])
 
-        this.app.post(
-            '/deliverers/attach',
-            upload.single('file'),
-            delivererController.attachLicenseImage.bind(delivererController)
-        )
-
-        this.app.post(
-            '/motorcycles',
-            motorcycleController.store.bind(motorcycleController)
-        )
-
-        this.app.get(
-            '/motorcycles',
-            motorcycleController.paginate.bind(motorcycleController)
-        )
-
-        this.app.patch(
-            '/motorcycles/:plate',
-            motorcycleController.updatePlate.bind(motorcycleController)
-        )
-
-        this.app.delete(
-            '/motorcycles/:plate',
-            motorcycleController.delete.bind(motorcycleController)
-        )
-
-        this.app.post('/rents', rentController.rent.bind(rentController))
-        this.app.get('/rents', rentController.paginate.bind(rentController))
-        this.app.post(
-            '/rents/expected-return',
-            rentController.expectedReturn.bind(rentController)
-        )
-
-        this.app.post(
-            '/rents/finalize-return',
-            rentController.finalizeRent.bind(rentController)
-        )
+        // Rent Routes
+        this.bindRoutes(TYPES.RentController, [
+            { method: 'post', path: '/rents', action: 'rent' },
+            { method: 'get', path: '/rents', action: 'paginate' },
+            {
+                method: 'post',
+                path: '/rents/expected-return',
+                action: 'expectedReturn',
+            },
+            {
+                method: 'post',
+                path: '/rents/finalize-return',
+                action: 'finalizeRent',
+            },
+        ])
     }
 
     private setupErrorHandling(): void {
@@ -133,9 +108,7 @@ export class APIServer implements ICMD {
 
     public async start() {
         await new MongoConnectionManager().initialize()
-
         const port = process.env.PORT || 3000
-
         this.app.listen(port, () => {
             logger.info(`API Server listening on port ${port}`)
         })

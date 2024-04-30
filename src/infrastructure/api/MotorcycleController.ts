@@ -14,9 +14,15 @@ import {
     UpdateMotorcycleRequest,
     UpdateMotorcycleRequestType,
 } from './requesters/UpdateMotorcycleRequest'
+import { inject, injectable } from 'inversify'
+import { TYPES } from '../../config/types'
 
+@injectable()
 export class MotorcycleController {
-    constructor(private readonly motorcycleService: IMotorcycleService) {}
+    constructor(
+        @inject(TYPES.MotorcycleService)
+        private readonly motorcycleService: IMotorcycleService
+    ) {}
 
     @Authorize([UserType.ADMIN])
     @ErrorHandler()

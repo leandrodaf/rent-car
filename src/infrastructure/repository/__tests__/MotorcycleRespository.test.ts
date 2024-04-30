@@ -1,10 +1,10 @@
-import { MotorcycleRespository } from '../MotorcycleRespository'
+import { MotorcycleRepository } from '../MotorcycleRepository'
 import {
     IMotorcycle,
     IMotorcycleModel,
     Motorcycle,
 } from '../../../domain/Motorcycle'
-import { IMotorcycleRespository } from '../../../application/interfaces/IMotorcycleRespository'
+import { IMotorcycleRepository } from '../../../application/interfaces/IMotorcycleRepository'
 import { buildPaginate } from '../Paginate'
 
 jest.mock('../../../domain/Motorcycle')
@@ -14,11 +14,11 @@ jest.mock('../Paginate', () => ({
 }))
 
 describe('MotorcycleRepository', () => {
-    let motorcycleRepository: IMotorcycleRespository
+    let motorcycleRepository: IMotorcycleRepository
 
     beforeEach(() => {
         jest.clearAllMocks()
-        motorcycleRepository = new MotorcycleRespository()
+        motorcycleRepository = new MotorcycleRepository()
     })
 
     describe('create', () => {

@@ -1,13 +1,17 @@
 import { StatusCodes } from 'http-status-codes'
 import { IMotorcycle, IMotorcycleModel } from '../domain/Motorcycle'
 import { FilterQuery } from '../infrastructure/api/requesters/queries/PaginateQuery'
-import { IMotorcycleRespository } from './interfaces/IMotorcycleRespository'
+import { IMotorcycleRepository } from './interfaces/IMotorcycleRepository'
 import { IMotorcycleService } from './interfaces/IMotorcycleService'
 import { CustomError } from '../utils/handdlers/CustomError'
+import { inject, injectable } from 'inversify'
+import { TYPES } from '../config/types'
 
+@injectable()
 export class MotorcycleService implements IMotorcycleService {
     constructor(
-        private readonly motorcycleRespository: IMotorcycleRespository
+        @inject(TYPES.MotorcycleRespository)
+        private readonly motorcycleRespository: IMotorcycleRepository
     ) {}
 
     async delete(search: Partial<IMotorcycle>): Promise<IMotorcycleModel> {

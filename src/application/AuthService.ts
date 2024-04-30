@@ -6,9 +6,15 @@ import { IAuthService, JWTToken } from './interfaces/IAuthService'
 import { CustomError } from '../utils/handdlers/CustomError'
 import { StatusCodes } from 'http-status-codes'
 import config from '../config'
+import { inject, injectable } from 'inversify'
+import { TYPES } from '../config/types'
 
+@injectable()
 export class AuthService implements IAuthService {
-    constructor(private readonly userRepository: IUserRepository) {}
+    constructor(
+        @inject(TYPES.UserRepository)
+        private readonly userRepository: IUserRepository
+    ) {}
 
     verifyToken(token: string): JWTToken {
         try {
