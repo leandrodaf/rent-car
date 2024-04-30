@@ -7,6 +7,7 @@ import logger from '../utils/logger'
 import { myContainer } from '../config/inversify.config'
 import { TYPES } from '../config/types'
 import { AuthMiddleware } from '../infrastructure/api/middlewares/AuthMiddleware'
+import kafka from '../infrastructure/database/KafkaConnectionManager'
 
 type ControllerMethods = {
     [action: string]: (...args: unknown[]) => unknown
@@ -108,6 +109,8 @@ export class APIServer implements ICMD {
 
     public async start() {
         await new MongoConnectionManager().initialize()
+        await kafka.initialize<void>('producer')
+
         const port = process.env.PORT || 3000
         this.app.listen(port, () => {
             logger.info(`API Server listening on port ${port}`)

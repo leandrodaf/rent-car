@@ -17,6 +17,7 @@ import { DelivererController } from '../infrastructure/api/DelivererController'
 import { MotorcycleRepository } from '../infrastructure/repository/MotorcycleRepository'
 import { S3Client } from '../infrastructure/storage/S3Client'
 import { AuthMiddleware } from '../infrastructure/api/middlewares/AuthMiddleware'
+import { KafkaAdapter } from '../infrastructure/message/KafkaMessage'
 
 const rentContainer = new Container()
 
@@ -63,6 +64,8 @@ rentContainer
 
 // Bind Others
 rentContainer.bind<S3Client>(TYPES.Storage).to(S3Client)
+
+rentContainer.bind<KafkaAdapter>(TYPES.Message).to(KafkaAdapter)
 
 // Bind middleware
 

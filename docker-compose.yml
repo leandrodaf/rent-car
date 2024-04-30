@@ -12,6 +12,7 @@ services:
         depends_on:
             - mongo
             - minio
+            - kafka
         environment:
             - ENTRY_SCRIPT=src/index.ts api
             - PORT=3000
@@ -50,33 +51,33 @@ services:
         environment:
             - MONGO_INITDB_DATABASE=meuprojeto
 
-    # zookeeper:
-    #     image: confluentinc/cp-zookeeper:latest
-    #     ports:
-    #         - '2181:2181'
-    #     environment:
-    #         - ZOOKEEPER_CLIENT_PORT=2181
+    zookeeper:
+        image: confluentinc/cp-zookeeper:latest
+        ports:
+            - '2181:2181'
+        environment:
+            - ZOOKEEPER_CLIENT_PORT=2181
 
-    # kafka:
-    #     image: confluentinc/cp-kafka:latest
-    #     ports:
-    #         - '9092:9092'
-    #     depends_on:
-    #         - zookeeper
-    #     environment:
-    #         - KAFKA_BROKER_ID=1
-    #         - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
-    #         - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
-    #         - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+    kafka:
+        image: confluentinc/cp-kafka:latest
+        ports:
+            - '9092:9092'
+        depends_on:
+            - zookeeper
+        environment:
+            - KAFKA_BROKER_ID=1
+            - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+            - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+            - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
 
-    # kafdrop:
-    #     image: obsidiandynamics/kafdrop
-    #     depends_on:
-    #         - kafka
-    #     ports:
-    #         - '19000:9000'
-    #     environment:
-    #         - KAFKA_BROKERCONNECT=kafka:9092
+    kafdrop:
+        image: obsidiandynamics/kafdrop
+        depends_on:
+            - kafka
+        ports:
+            - '19000:9000'
+        environment:
+            - KAFKA_BROKERCONNECT=kafka:9092
 
     minio:
         image: minio/minio

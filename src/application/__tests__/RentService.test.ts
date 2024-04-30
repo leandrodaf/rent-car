@@ -8,6 +8,7 @@ import { CustomError } from '../../utils/handdlers/CustomError'
 import { StatusCodes } from 'http-status-codes'
 import { DateTime } from 'luxon'
 import { FilterQuery } from '../../infrastructure/api/requesters/queries/PaginateQuery'
+import { IMessage } from '../../infrastructure/message/IMessage'
 
 const mockDelivererService: jest.Mocked<IDelivererService> = {
     findById: jest.fn(),
@@ -25,6 +26,11 @@ const mockRentRepository: jest.Mocked<IRentRepository> = {
     filter: jest.fn(),
     findRentedByPlate: jest.fn(),
     update: jest.fn(),
+}
+
+const mockMessage: jest.Mocked<IMessage> = {
+    sendMessage: jest.fn(),
+    consumeMessage: jest.fn(),
 }
 
 describe('RentService', () => {
@@ -51,7 +57,8 @@ describe('RentService', () => {
         service = new RentService(
             mockRentRepository,
             mockDelivererService,
-            mockRentPlanRepository
+            mockRentPlanRepository,
+            mockMessage
         )
     })
 
@@ -74,7 +81,6 @@ describe('RentService', () => {
                 )
             )
 
-            // Verificar que não tentamos criar uma reserva
             expect(mockRentRepository.create).not.toHaveBeenCalled()
         })
 
@@ -129,7 +135,8 @@ describe('RentService', () => {
                     days: 7,
                     dailyRate: 3000,
                 },
-            } as IRentModel
+                toJSON: () => null,
+            } as unknown as IRentModel
 
             mockDelivererService.findById.mockResolvedValue(deliverer)
             mockRentPlanRepository.findBy.mockReturnValue({
@@ -147,6 +154,11 @@ describe('RentService', () => {
                 })
             )
             expect(result).toEqual(expectedRent)
+
+            expect(mockMessage.sendMessage).toHaveBeenCalledWith(
+                'rent-create',
+                [{ value: JSON.stringify(expectedRent) }]
+            )
         })
     })
 

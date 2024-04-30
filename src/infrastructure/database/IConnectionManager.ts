@@ -1,3 +1,3 @@
 export interface IConnectionManager {
-    initialize(): void
+    initialize(...params: unknown[])
 }

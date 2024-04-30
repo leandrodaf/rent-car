@@ -27,6 +27,8 @@ const TYPES = {
     // Others
     Storage: Symbol.for('Storage'),
 
+    Message: Symbol.for('Message'),
+
     // Middlewares
     AuthMiddleware: Symbol.for('AuthMiddleware'),
 }

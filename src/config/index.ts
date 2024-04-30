@@ -105,8 +105,7 @@ const config: AppConfig = {
         brokers: [process.env.KAFKA_HOST || 'localhost:9092'],
         groupId: 'rent-group',
         topics: [
-            { topic: 'rental-create', numPartitions: 1, replicationFactor: 1 },
-            { topic: 'rental-updated', numPartitions: 1, replicationFactor: 1 },
+            { topic: 'rent-create', numPartitions: 1, replicationFactor: 1 },
         ],
     },
 }

@@ -10,6 +10,7 @@ import { IRentRepository } from './interfaces/IRentRepository'
 import { FilterQuery } from '../infrastructure/api/requesters/queries/PaginateQuery'
 import { inject, injectable } from 'inversify'
 import { TYPES } from '../config/types'
+import { IMessage } from '../infrastructure/message/IMessage'
 
 @injectable()
 export class RentService implements IRentService {
@@ -19,7 +20,10 @@ export class RentService implements IRentService {
         @inject(TYPES.DelivererService)
         private readonly delivererService: IDelivererService,
         @inject(TYPES.RentPlanRepository)
-        private readonly rentPlanRepository: IRentPlanRepository
+        private readonly rentPlanRepository: IRentPlanRepository,
+
+        @inject(TYPES.Message)
+        private readonly message: IMessage
     ) {}
 
     async paginate(search: FilterQuery<Partial<IRent>>): Promise<IRentModel[]> {
@@ -90,7 +94,9 @@ export class RentService implements IRentService {
             status: RentStatus.PROCESSING,
         })
 
-        // Disparar para o kafka
+        this.message.sendMessage('rent-create', [
+            { value: JSON.stringify(created.toJSON()) },
+        ])
 
         return created
     }
