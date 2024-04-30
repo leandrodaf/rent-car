@@ -1,4 +1,4 @@
-import { IRent, IRentModel, Rent } from '../../../domain/Rent'
+import { IRent, IRentModel, Rent, RentStatus } from '../../../domain/Rent'
 import { RentRepository } from '../RentRepository'
 import { buildPaginate } from '../Paginate'
 
@@ -89,6 +89,55 @@ describe('RentRepository', () => {
             )
             expect(Rent.find).toHaveBeenCalledWith({})
             expect(execMock).toHaveBeenCalled()
+        })
+    })
+
+    describe('findRentedByPlate', () => {
+        it('should find a rented record by plate and delivererId', async () => {
+            const mockRentModel = {
+                _id: '123',
+                deliverer: 'deliverer123',
+                motorcycle: {
+                    plate: 'XYZ1234',
+                },
+                status: RentStatus.RENTED,
+            } as unknown as IRentModel
+
+            Rent.findOne = jest.fn().mockReturnValue({
+                populate: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(mockRentModel),
+                }),
+            })
+
+            const result = await rentRepository.findRentedByPlate(
+                'deliverer123',
+                'XYZ1234'
+            )
+
+            expect(Rent.findOne).toHaveBeenCalledWith({
+                deliverer: 'deliverer123',
+                status: RentStatus.RENTED,
+            })
+            expect(result).toEqual(mockRentModel)
+        })
+
+        it('should return null when no rent record matches the query', async () => {
+            Rent.findOne = jest.fn().mockReturnValue({
+                populate: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(null),
+                }),
+            })
+
+            const result = await rentRepository.findRentedByPlate(
+                'deliverer999',
+                'XYZ9999'
+            )
+
+            expect(Rent.findOne).toHaveBeenCalledWith({
+                deliverer: 'deliverer999',
+                status: RentStatus.RENTED,
+            })
+            expect(result).toBeNull()
         })
     })
 })

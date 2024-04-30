@@ -1,5 +1,5 @@
 import { IRentRepository } from '../../application/interfaces/IRentRepository'
-import { IRent, IRentModel, Rent } from '../../domain/Rent'
+import { IRent, IRentModel, Rent, RentStatus } from '../../domain/Rent'
 import { buildPaginate } from './Paginate'
 
 export class RentRepository implements IRentRepository {
@@ -16,5 +16,20 @@ export class RentRepository implements IRentRepository {
         query = buildPaginate<IRent>(paginate, query)
 
         return query.exec()
+    }
+
+    findRentedByPlate(
+        delivererId: string,
+        plate: String
+    ): Promise<IRentModel | null> {
+        return Rent.findOne({
+            deliverer: delivererId,
+            status: RentStatus.RENTED,
+        })
+            .populate({
+                path: 'motorcycle',
+                match: { plate },
+            })
+            .exec()
     }
 }

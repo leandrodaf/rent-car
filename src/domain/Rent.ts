@@ -9,13 +9,15 @@ export enum RentStatus {
     DONE = 'done',
 }
 
+export interface IRentPlan {
+    days: number
+    dailyRate: number
+}
+
 export interface IRent {
     deliverer: IDelivererModel
     motorcycle?: IMotorcycle
-    plan: {
-        days: number
-        dailyRate: number
-    }
+    plan: IRentPlan
     startDate: Date
     endDate: Date
     deliveryForecastDate: Date

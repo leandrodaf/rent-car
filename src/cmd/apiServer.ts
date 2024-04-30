@@ -19,6 +19,8 @@ import { RentController } from '../infrastructure/api/RentController'
 import { RentService } from '../application/RentService'
 import { RentPlanRepository } from '../infrastructure/repository/RentPlanRepository'
 import { RentRepository } from '../infrastructure/repository/RentRepository'
+import { RentBudgetService } from '../application/RentBudgetService'
+import { SimplePaymentCalculationStrategy } from '../application/SimplePaymentCalculationStrategy'
 
 export class APIServer implements ICMD {
     private app: express.Application
@@ -50,12 +52,22 @@ export class APIServer implements ICMD {
             delivererService,
             rentPlanRepository
         )
+        const simplePaymentCalculationStrategy =
+            new SimplePaymentCalculationStrategy()
+
+        const rentBudgetService = new RentBudgetService(
+            rentRepository,
+            simplePaymentCalculationStrategy
+        )
 
         const authController = new AuthController(authService)
         const delivererController = new DelivererController(delivererService)
         const motorcycleController = new MotorcycleController(motorcycleService)
 
-        const rentController = new RentController(rentService)
+        const rentController = new RentController(
+            rentService,
+            rentBudgetService
+        )
 
         const authMiddleware = new AuthMiddleware(authService)
 
@@ -104,6 +116,10 @@ export class APIServer implements ICMD {
 
         this.app.post('/rents', rentController.rent.bind(rentController))
         this.app.get('/rents', rentController.paginate.bind(rentController))
+        this.app.post(
+            '/rents/expected-return',
+            rentController.expectedReturn.bind(rentController)
+        )
     }
 
     private setupErrorHandling(): void {

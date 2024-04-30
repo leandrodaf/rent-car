@@ -8,4 +8,9 @@ export interface IRentRepository {
         filters: Partial<IRent> | null,
         paginate?: PaginateQueryType
     ): Promise<IRentModel[]>
+
+    findRentedByPlate(
+        delivererId: string,
+        plate: String
+    ): Promise<IRentModel | null>
 }

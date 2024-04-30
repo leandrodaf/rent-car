@@ -4,10 +4,16 @@ import { IRentService } from '../../../application/interfaces/IRentService'
 import { UserType } from '../../../domain/User'
 import { RentResource } from '../resources/RentResource'
 import { IRentModel } from '../../../domain/Rent'
+import {
+    IRentBudgetService,
+    PriceCalculated,
+} from '../../../application/interfaces/IRentBudgetService'
+import { ZodError } from 'zod'
 
 describe('RentController', () => {
     let controller: RentController
     let mockRentService: jest.Mocked<IRentService>
+    let mockRentBudgetService: jest.Mocked<IRentBudgetService>
 
     beforeEach(() => {
         jest.resetAllMocks()
@@ -17,7 +23,13 @@ describe('RentController', () => {
             paginate: jest.fn(),
         }
 
-        controller = new RentController(mockRentService)
+        mockRentBudgetService = {
+            expectedReturn: jest.fn(),
+        }
+
+        // Exemplo de total de dias utilizados
+
+        controller = new RentController(mockRentService, mockRentBudgetService)
     })
 
     describe('rent', () => {
@@ -36,7 +48,6 @@ describe('RentController', () => {
 
             expect(mockRentService.renting).toHaveBeenCalledWith(
                 'user-id',
-                new Date('2024-04-30T03:00:00.000Z'),
                 new Date('2024-05-01T03:00:00.000Z')
             )
             expect(res.status).toHaveBeenCalledWith(202)
@@ -46,8 +57,7 @@ describe('RentController', () => {
         it('should handle errors if request validation fails', async () => {
             const { req, res, next } = createMockReqRes({
                 body: {
-                    startDate: 'invalid-date',
-                    endDate: '2024-05-01',
+                    endDate: 'invalid-date',
                 },
                 auth: { _id: 'user-id', userType: UserType.DELIVERER },
             })
@@ -63,7 +73,6 @@ describe('RentController', () => {
             const mockRentData = [
                 {
                     id: 'rent-id',
-                    startDate: new Date('2024-04-30T03:00:00.000Z'),
                     endDate: new Date('2024-05-01T03:00:00.000Z'),
                     delivererId: 'user-id',
                 } as unknown as IRentModel,
@@ -113,6 +122,86 @@ describe('RentController', () => {
             await controller.paginate(req, res, next)
 
             expect(next).toHaveBeenCalledWith(error)
+        })
+    })
+
+    describe('expectedReturn', () => {
+        it('should successfully calculate expected return price and return the appropriate response', async () => {
+            const body = {
+                plate: 'XYZ1A21',
+                deliveryDate: '2024-05-01',
+            }
+
+            const expectedPriceData = {
+                totalCost: 20000,
+                totalDaysUsed: 10,
+                rent: {
+                    plan: {},
+                    startDate: new Date('2024-04-29'),
+                    endDate: new Date('2024-04-29'),
+                },
+            } as PriceCalculated
+
+            const { req, res, next } = createMockReqRes({
+                body,
+                auth: { _id: 'user-id', userType: UserType.DELIVERER },
+            })
+
+            // Mockando a chamada ao método expectedReturn do serviço rentBudgetService
+            mockRentBudgetService.expectedReturn.mockResolvedValue(
+                expectedPriceData
+            )
+
+            await controller.expectedReturn(req, res, next)
+
+            expect(mockRentBudgetService.expectedReturn).toHaveBeenCalledWith(
+                'user-id',
+                'XYZ1A21',
+                new Date('2024-05-01T03:00:00.000Z') // Convertendo a data de entrega para o formato de data JavaScript
+            )
+            expect(res.status).toHaveBeenCalledWith(200)
+            expect(res.json).toHaveBeenCalledWith({
+                data: {
+                    deliveryDate: new Date('2024-05-01T03:00:00.000Z'),
+                    endDate: new Date('2024-04-29T00:00:00.000Z'),
+                    plan: {},
+                    startDate: new Date('2024-04-29T00:00:00.000Z'),
+                    totalCost: 20000,
+                    totalDaysUsed: 10,
+                },
+            })
+        })
+
+        it('should handle errors if request validation fails', async () => {
+            const { req, res, next } = createMockReqRes({
+                body: {
+                    deliveryDate: 'invalid-date',
+                },
+                auth: { _id: 'user-id', userType: UserType.DELIVERER },
+            })
+
+            await controller.expectedReturn(req, res, next)
+
+            expect(next).toHaveBeenCalled()
+        })
+
+        it('should handle errors if expected return calculation fails', async () => {
+            const body = {
+                plate: 'ABC1234',
+                deliveryDate: '2024-05-01',
+            }
+
+            const { req, res, next } = createMockReqRes({
+                body,
+                auth: { _id: 'user-id', userType: UserType.DELIVERER },
+            })
+
+            const error = new Error('Calculation failure')
+            mockRentBudgetService.expectedReturn.mockRejectedValue(error)
+
+            await controller.expectedReturn(req, res, next)
+
+            expect(next).toHaveBeenCalledWith(expect.any(ZodError))
         })
     })
 })

@@ -23,6 +23,7 @@ const mockRentPlanRepository: jest.Mocked<IRentPlanRepository> = {
 const mockRentRepository: jest.Mocked<IRentRepository> = {
     create: jest.fn(),
     filter: jest.fn(),
+    findRentedByPlate: jest.fn(),
 }
 
 describe('RentService', () => {
@@ -55,7 +56,6 @@ describe('RentService', () => {
 
     describe('renting', () => {
         it('should throw an error if no rental plan is available for the specified date range', async () => {
-            const startDate = new Date('2024-05-01')
             const endDate = new Date('2025-05-15')
 
             const authorizedDeliverer = {
@@ -66,9 +66,7 @@ describe('RentService', () => {
             mockDelivererService.findById.mockResolvedValue(authorizedDeliverer)
             mockRentPlanRepository.findBy.mockReturnValue(undefined)
 
-            await expect(
-                service.renting('1', startDate, endDate)
-            ).rejects.toThrow(
+            await expect(service.renting('1', endDate)).rejects.toThrow(
                 new CustomError(
                     'No rental plan available for the specified range dates.',
                     StatusCodes.BAD_REQUEST
@@ -92,9 +90,7 @@ describe('RentService', () => {
                 unauthorizedDeliverer
             )
 
-            await expect(
-                service.renting('2', startDate, endDate)
-            ).rejects.toThrow(
+            await expect(service.renting('2', endDate)).rejects.toThrow(
                 new CustomError(
                     'Deliverer is not authorized to rent a motorcycle.',
                     StatusCodes.BAD_REQUEST
@@ -110,11 +106,9 @@ describe('RentService', () => {
 
             mockDelivererService.findById.mockResolvedValue(deliverer)
 
-            await expect(
-                service.renting('1', startDate, endDate)
-            ).rejects.toThrow(
+            await expect(service.renting('1', endDate)).rejects.toThrow(
                 new CustomError(
-                    'Reservation dates cannot be today or a past date.',
+                    'No rental plan available for the specified range dates.',
                     StatusCodes.BAD_REQUEST
                 )
             )
@@ -143,9 +137,9 @@ describe('RentService', () => {
             })
             mockRentRepository.create.mockResolvedValue(expectedRent)
 
-            const result = await service.renting('1', startDate, endDate)
+            const result = await service.renting('1', endDate)
 
-            expect(mockRentPlanRepository.findBy).toHaveBeenCalledWith(7)
+            expect(mockRentPlanRepository.findBy).toHaveBeenCalledWith(8)
             expect(mockRentRepository.create).toHaveBeenCalledWith(
                 expect.objectContaining({
                     plan: { dailyRate: 3000, days: 7 },

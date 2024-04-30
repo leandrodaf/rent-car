@@ -58,7 +58,6 @@ interface AppConfig {
     kafka: KafkaConfig
     environment: EnvironmentType
     port: string | undefined
-    timezone: string
     database: DatabaseConfig
     auth: AuthConfig
     aws: AWSConfig
@@ -68,7 +67,6 @@ interface AppConfig {
 const config: AppConfig = {
     environment: getValidEnvironment(process.env.NODE_ENV),
     port: process.env.PORT,
-    timezone: 'America/Sao_Paulo',
 
     auth: {
         jwt: {

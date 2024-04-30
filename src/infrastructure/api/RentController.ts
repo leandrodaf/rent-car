@@ -13,9 +13,18 @@ import { StatusCodes } from 'http-status-codes'
 import { getQueries } from './requesters/queries/PaginateQuery'
 import { RentQuery } from './requesters/queries/RentQuery'
 import { RentResource } from './resources/RentResource'
+import {
+    DeliveryRequestType,
+    DeliverySchema,
+} from './requesters/ExpectedReturnRentingRequest'
+import { IRentBudgetService } from '../../application/interfaces/IRentBudgetService'
+import { ExpectedPriceResource } from './resources/ExpectedPriceResource'
 
 export class RentController {
-    constructor(private readonly rentService: IRentService) {}
+    constructor(
+        private readonly rentService: IRentService,
+        private readonly rentBudgetService: IRentBudgetService
+    ) {}
 
     @Authorize([UserType.DELIVERER])
     @ErrorHandler()
@@ -27,11 +36,7 @@ export class RentController {
             throw new CustomError('Unidentified user', StatusCodes.FORBIDDEN)
         }
 
-        await this.rentService.renting(
-            req.auth._id,
-            result.startDate,
-            result.endDate
-        )
+        await this.rentService.renting(req.auth._id, result.endDate)
 
         response.status(202).send()
     }
@@ -46,6 +51,28 @@ export class RentController {
         response.status(200).json({
             data: result.map((item) => new RentResource(item)),
             paginate: query.paginate,
+        })
+    }
+
+    @Authorize([UserType.DELIVERER])
+    @ErrorHandler()
+    async expectedReturn(req: Request, response: Response, next: NextFunction) {
+        const result: DeliveryRequestType = await DeliverySchema.parseAsync(
+            req.body
+        )
+
+        if (!req.auth._id) {
+            throw new CustomError('Unidentified user', StatusCodes.FORBIDDEN)
+        }
+
+        const data = await this.rentBudgetService.expectedReturn(
+            req.auth._id,
+            result.plate,
+            result.deliveryDate
+        )
+
+        response.status(200).json({
+            data: new ExpectedPriceResource(data, result.deliveryDate),
         })
     }
 }
